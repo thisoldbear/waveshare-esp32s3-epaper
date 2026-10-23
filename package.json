@@ -1,0 +1,20 @@
+{
+  "name": "waveshare-esp32s3-epaper",
+  "version": "1.0.0",
+  "description": "Espruino TypeScript application for Waveshare ESP32-S3 e-Paper 1.54\"",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/index.ts --bundle --target=es2018 --format=iife --outfile=dist/app.js",
+    "typecheck": "tsc --noEmit",
+    "backup": "uvx esptool --chip esp32s3 --port /dev/cu.usbmodem2101 read_flash 0x0 0x800000 firmware/factory_backup.bin",
+    "firmware:flash": "uvx esptool --chip esp32s3 --port /dev/cu.usbmodem2101 write_flash --flash_mode dio --flash_size detect --flash_freq 80m 0x0 firmware/bootloader.bin 0x8000 firmware/partition-table.bin 0x10000 firmware/espruino-esp32s3.bin",
+    "upload": "npx espruino -p /dev/tty.usbmodem2101 --no-ble -e \"save()\" dist/app.js",
+    "dev": "npm run build && npm run upload"
+  },
+  "devDependencies": {
+    "@types/espruino": "^1.95.1",
+    "esbuild": "^0.25.0",
+    "espruino": "^0.1.67",
+    "typescript": "^5.8.2"
+  }
+}
