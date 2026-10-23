@@ -43,11 +43,12 @@ export class WaveshareEPaper154 {
   private csPin = D11;
   private sckPin = D12;
   private mosiPin = D13;
+  private spi = new (globalThis as any).SPI();
 
   private sendCommand(cmd: number): void {
     digitalWrite(this.dcPin, 0); // DC = command
     digitalWrite(this.csPin, 0); // CS = active
-    SPI1.write(cmd);
+    this.spi.write(cmd);
     digitalWrite(this.csPin, 1); // CS = inactive
   }
 
@@ -58,10 +59,10 @@ export class WaveshareEPaper154 {
       const chunkSize = 1024;
       for (let offset = 0; offset < data.length; offset += chunkSize) {
         const end = Math.min(offset + chunkSize, data.length);
-        SPI1.write(data.subarray(offset, end) as any);
+        this.spi.write(data.subarray(offset, end) as any);
       }
     } else {
-      SPI1.write(data as any);
+      this.spi.write(data as any);
     }
     digitalWrite(this.csPin, 1); // CS = inactive
   }
@@ -89,12 +90,12 @@ export class WaveshareEPaper154 {
 
   private setWindows(xStart: number, yStart: number, xEnd: number, yEnd: number): void {
     this.sendCommand(0x44); // SET_RAM_X_ADDRESS_START_END_POSITION
-    this.sendData([(xStart >> 3) & 0xFF, (yStart >> 3) & 0xFF]);
+    this.sendData([(xStart >> 3) & 0xFF, (xEnd >> 3) & 0xFF]);
 
     this.sendCommand(0x45); // SET_RAM_Y_ADDRESS_START_END_POSITION
     this.sendData([
-      xEnd & 0xFF,
-      (xEnd >> 8) & 0xFF,
+      yStart & 0xFF,
+      (yStart >> 8) & 0xFF,
       yEnd & 0xFF,
       (yEnd >> 8) & 0xFF
     ]);
@@ -102,7 +103,7 @@ export class WaveshareEPaper154 {
 
   private setCursor(x: number, y: number): void {
     this.sendCommand(0x4E); // SET_RAM_X_ADDRESS_COUNTER
-    this.sendData(x & 0xFF);
+    this.sendData((x >> 3) & 0xFF);
 
     this.sendCommand(0x4F); // SET_RAM_Y_ADDRESS_COUNTER
     this.sendData([y & 0xFF, (y >> 8) & 0xFF]);
@@ -139,10 +140,11 @@ export class WaveshareEPaper154 {
     digitalWrite(this.rstPin, 1);
     pinMode(this.busyPin, "input", false);
 
-    SPI1.setup({
+    // Initialize SPI on D12 (SCK) and D13 (MOSI)
+    this.spi.setup({
       sck: this.sckPin,
       mosi: this.mosiPin,
-      baud: 4000000,
+      baud: 2000000,
       order: "msb",
       bits: 8
     });
@@ -172,7 +174,7 @@ export class WaveshareEPaper154 {
         this.sendCommand(0x11); // Data entry mode
         this.sendData(0x01);
 
-        this.setWindows(0, EPD_WIDTH - 1, EPD_HEIGHT - 1, 0);
+        this.setWindows(0, EPD_HEIGHT - 1, EPD_WIDTH - 1, 0);
 
         this.sendCommand(0x3C); // Border waveform
         this.sendData(0x01);
@@ -212,8 +214,7 @@ export class WaveshareEPaper154 {
     this.sendData(0xC7);
     this.sendCommand(0x20); // Master Activation
 
-    // Wait 3.5 seconds for e-paper refresh to complete
-    return delayMs(3500).then(() => {
+    return this.waitUntilIdle(10000).then(() => {
       console.log("[EPD] Refresh cycle complete!");
     });
   }
