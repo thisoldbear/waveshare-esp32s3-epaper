@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES5",
     "module": "CommonJS",
-    "lib": ["ES2018", "DOM"],
+    "lib": ["ES5", "ES2015.Promise", "DOM"],
+    "downlevelIteration": true,
     "strict": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
