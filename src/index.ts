@@ -11,6 +11,8 @@ function main(): Promise<void> {
   const epd = new WaveshareEPaper154();
 
   return epd.init().then(() => {
+    console.log("[App] Rendering graphics buffer...");
+
     // Create 200x200 1-bit monochrome graphics buffer
     const g = Graphics.createArrayBuffer(EPD_WIDTH, EPD_HEIGHT, 1, { msb: true });
 
@@ -18,17 +20,17 @@ function main(): Promise<void> {
     g.setColor(1);
     g.fillRect(0, 0, EPD_WIDTH - 1, EPD_HEIGHT - 1);
 
-    // Draw decorative outer border
+    // Draw decorative double outer border
     g.setColor(0);
     g.drawRect(4, 4, EPD_WIDTH - 5, EPD_HEIGHT - 5);
     g.drawRect(6, 6, EPD_WIDTH - 7, EPD_HEIGHT - 7);
 
     // Top header banner
-    g.fillRect(10, 10, EPD_WIDTH - 11, 36);
+    g.fillRect(10, 10, EPD_WIDTH - 11, 40);
     g.setColor(1); // Inverted white text on black banner
     g.setFont("6x8", 2);
     g.setFontAlign(0, 0);
-    g.drawString("ESPRUINO", 100, 23);
+    g.drawString("ESPRUINO", 100, 25);
 
     // Main "Hello World!" message
     g.setColor(0);
@@ -47,23 +49,19 @@ function main(): Promise<void> {
     // Decorative bottom dots
     g.drawString("* * * * *", 100, 175);
 
-    // Push buffer to display
+    console.log("[App] Pushing buffer to e-paper display...");
     return epd.display(g.buffer);
   }).then(() => {
-    return epd.sleep();
-  }).then(() => {
     console.log("=== Hello World successfully displayed! ===");
+  }).catch((err) => {
+    console.log("[App] Error:", err);
   });
 }
 
 // Global Espruino lifecycle hook (runs on reboot/power up)
 (globalThis as any).onInit = function(): void {
-  main().catch((err) => {
-    console.log("Error running app:", err);
-  });
+  main();
 };
 
 // Also run immediately upon code upload
-main().catch((err) => {
-  console.log("Error running app:", err);
-});
+main();

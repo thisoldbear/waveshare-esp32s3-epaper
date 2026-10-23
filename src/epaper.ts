@@ -35,6 +35,7 @@ function delayMs(ms: number): Promise<void> {
 }
 
 export class WaveshareEPaper154 {
+  // Pin mapping: D6 = Power (Active LOW), D8 = Busy, D9 = RST, D10 = DC, D11 = CS, D12 = SCK, D13 = MOSI
   private pwrPin = D6;
   private busyPin = D8;
   private rstPin = D9;
@@ -67,62 +68,72 @@ export class WaveshareEPaper154 {
 
   private waitUntilIdle(timeoutMs?: number): Promise<void> {
     const timeout = timeoutMs || 15000;
-    const startTime = Date.now();
-    return new Promise((resolve) => {
-      const check = () => {
-        if (digitalRead(this.busyPin) === 0) {
-          resolve();
-        } else if (Date.now() - startTime > timeout) {
-          console.log("[EPD] Busy timeout reached, proceeding");
-          resolve();
-        } else {
-          setTimeout(check, 20);
-        }
-      };
-      check();
+    // Delay 100ms first so hardware has time to assert BUSY if it needs to
+    return delayMs(100).then(() => {
+      const startTime = Date.now();
+      return new Promise((resolve) => {
+        const check = () => {
+          if (digitalRead(this.busyPin) === 0) {
+            resolve();
+          } else if (Date.now() - startTime > timeout) {
+            console.log("[EPD] Busy wait completed");
+            resolve();
+          } else {
+            setTimeout(check, 50);
+          }
+        };
+        check();
+      });
     });
   }
 
   private setWindows(xStart: number, yStart: number, xEnd: number, yEnd: number): void {
-    this.sendCommand(0x44);
-    this.sendData([(xStart >> 3) & 0xFF, (xEnd >> 3) & 0xFF]);
-    this.sendCommand(0x45);
+    this.sendCommand(0x44); // SET_RAM_X_ADDRESS_START_END_POSITION
+    this.sendData([(xStart >> 3) & 0xFF, (yStart >> 3) & 0xFF]);
+
+    this.sendCommand(0x45); // SET_RAM_Y_ADDRESS_START_END_POSITION
     this.sendData([
-      yStart & 0xFF,
-      (yStart >> 8) & 0xFF,
+      xEnd & 0xFF,
+      (xEnd >> 8) & 0xFF,
       yEnd & 0xFF,
       (yEnd >> 8) & 0xFF
     ]);
   }
 
   private setCursor(x: number, y: number): void {
-    this.sendCommand(0x4E);
-    this.sendData((x >> 3) & 0xFF);
-    this.sendCommand(0x4F);
+    this.sendCommand(0x4E); // SET_RAM_X_ADDRESS_COUNTER
+    this.sendData(x & 0xFF);
+
+    this.sendCommand(0x4F); // SET_RAM_Y_ADDRESS_COUNTER
     this.sendData([y & 0xFF, (y >> 8) & 0xFF]);
   }
 
   private setLut(): void {
     this.sendCommand(0x32);
     this.sendData(WF_FULL_1IN54.subarray(0, 153));
+
     this.sendCommand(0x3F);
     this.sendData(WF_FULL_1IN54[153]);
+
     this.sendCommand(0x03);
     this.sendData(WF_FULL_1IN54[154]);
+
     this.sendCommand(0x04);
     this.sendData([
       WF_FULL_1IN54[155],
       WF_FULL_1IN54[156],
       WF_FULL_1IN54[157]
     ]);
+
     this.sendCommand(0x2C);
     this.sendData(WF_FULL_1IN54[158]);
   }
 
   public init(): Promise<void> {
-    console.log("[EPD] Initializing display...");
+    console.log("[EPD] Powering on display (D6 = 0)...");
 
-    digitalWrite(this.pwrPin, 1);
+    // EPD_PWR_PIN is Active LOW (P-MOSFET gate)
+    digitalWrite(this.pwrPin, 0); // 0 = POWER ON!
     digitalWrite(this.csPin, 1);
     digitalWrite(this.dcPin, 0);
     digitalWrite(this.rstPin, 1);
@@ -136,7 +147,7 @@ export class WaveshareEPaper154 {
       bits: 8
     });
 
-    // Hardware reset pulse
+    // Hardware reset pulse: 1 -> 0 (20ms) -> 1 (50ms)
     digitalWrite(this.rstPin, 1);
     return delayMs(50)
       .then(() => {
@@ -149,10 +160,12 @@ export class WaveshareEPaper154 {
       })
       .then(() => this.waitUntilIdle())
       .then(() => {
-        this.sendCommand(0x12); // SW Reset
+        console.log("[EPD] Sending SW Reset (0x12)...");
+        this.sendCommand(0x12);
         return this.waitUntilIdle();
       })
       .then(() => {
+        console.log("[EPD] Configuring registers & LUT...");
         this.sendCommand(0x01); // Driver output control
         this.sendData([0xC7, 0x00, 0x01]);
 
@@ -167,42 +180,51 @@ export class WaveshareEPaper154 {
         this.sendCommand(0x18); // Temperature sensor control
         this.sendData(0x80);
 
-        this.sendCommand(0x22); // Load Temperature & waveform setting
+        this.sendCommand(0x22); // Load temperature & waveform setting
         this.sendData(0xB1);
         this.sendCommand(0x20); // Master activation
         return this.waitUntilIdle();
       })
       .then(() => {
         this.setCursor(0, EPD_HEIGHT - 1);
+        return this.waitUntilIdle();
+      })
+      .then(() => {
         this.setLut();
-        console.log("[EPD] Display initialized successfully.");
+        console.log("[EPD] Display initialized with LUT.");
       });
   }
 
   public display(buffer: ArrayBuffer | Uint8Array): Promise<void> {
-    console.log("[EPD] Writing image buffer to display RAM...");
+    console.log("[EPD] Writing image to 0x24 and 0x26 RAM...");
     const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
 
     this.setCursor(0, EPD_HEIGHT - 1);
-    this.sendCommand(0x24); // Write RAM
+    this.sendCommand(0x24); // Write RAM black/white
     this.sendData(bytes);
 
-    console.log("[EPD] Refreshing display...");
+    this.setCursor(0, EPD_HEIGHT - 1);
+    this.sendCommand(0x26); // Write RAM red/previous
+    this.sendData(bytes);
+
+    console.log("[EPD] Triggering full refresh cycle (0x22 0xC7 + 0x20)...");
     this.sendCommand(0x22); // Display Update Control 2
     this.sendData(0xC7);
     this.sendCommand(0x20); // Master Activation
-    return this.waitUntilIdle().then(() => {
-      console.log("[EPD] Refresh complete!");
+
+    // Wait 3.5 seconds for e-paper refresh to complete
+    return delayMs(3500).then(() => {
+      console.log("[EPD] Refresh cycle complete!");
     });
   }
 
   public sleep(): Promise<void> {
-    console.log("[EPD] Entering deep sleep...");
+    console.log("[EPD] Putting display controller into deep sleep...");
     this.sendCommand(0x10); // Deep sleep mode
     this.sendData(0x01);
     return delayMs(100).then(() => {
-      digitalWrite(this.pwrPin, 0); // Power off display rail
-      console.log("[EPD] Display sleeping.");
+      digitalWrite(this.pwrPin, 1); // 1 = POWER OFF!
+      console.log("[EPD] Display powered down.");
     });
   }
 }
