@@ -1,5 +1,7 @@
 // Custom TypeScript declarations for Espruino globals on ESP32-S3
 
+declare const D0: Pin;
+declare const D3: Pin;
 declare const D6: Pin;
 declare const D8: Pin;
 declare const D9: Pin;
@@ -7,9 +9,26 @@ declare const D10: Pin;
 declare const D11: Pin;
 declare const D12: Pin;
 declare const D13: Pin;
+declare const D18: Pin;
+declare const BTN: Pin;
 
 declare function save(): void;
 declare function reset(): void;
+
+interface WatchOptions {
+  repeat?: boolean;
+  edge?: "rising" | "falling" | "both";
+  debounce?: number;
+  data?: any;
+}
+
+declare function setWatch(
+  callback: (e: { state: boolean; time: number; lastTime: number }) => void,
+  pin: Pin,
+  options?: WatchOptions
+): number;
+
+declare function clearWatch(id?: number): void;
 
 interface GraphicsBufferOptions {
   msb?: boolean;
