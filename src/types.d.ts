@@ -1,5 +1,7 @@
 // Custom TypeScript declarations for Espruino globals on ESP32-S3
 
+interface Pin {}
+
 declare const D0: Pin;
 declare const D3: Pin;
 declare const D6: Pin;
@@ -11,6 +13,11 @@ declare const D12: Pin;
 declare const D13: Pin;
 declare const D18: Pin;
 declare const BTN: Pin;
+
+declare function pinMode(pin: Pin, mode?: string, automatic?: boolean): void;
+declare function digitalWrite(pin: Pin, val: boolean | number): void;
+declare function digitalRead(pin: Pin): number;
+declare function getTime(): number;
 
 declare function save(): void;
 declare function reset(): void;
