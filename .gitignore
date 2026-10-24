@@ -5,6 +5,7 @@ node_modules/
 
 # Build output
 dist/
+dist-web/
 
 # Firmware binaries and flash backups
 firmware/*.bin

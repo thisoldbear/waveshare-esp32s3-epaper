@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#14171a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>The Dark Wood - E-Paper RPG</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="emulator-viewport">
+      <div class="board-shell">
+        <!-- Top PCB Header -->
+        <div class="board-header">
+          <div class="header-meta">
+            <span class="brand-text">WAVESHARE 1.54" E-PAPER</span>
+            <span class="chip-text">ESP32-S3 • 200x200 MONO</span>
+          </div>
+          <div class="led-container">
+            <span class="led-label">D3 BUSY</span>
+            <div id="status-led" class="status-led"></div>
+          </div>
+        </div>
+
+        <!-- E-Paper Screen Frame -->
+        <div class="screen-frame">
+          <div class="screen-inner-bezel">
+            <canvas
+              id="epaper-canvas"
+              width="200"
+              height="200"
+              class="epaper-canvas"
+            ></canvas>
+          </div>
+        </div>
+
+        <!-- Mobile-First Tactile Controls -->
+        <div class="controls-panel">
+          <button id="btn-boot" type="button" class="hardware-button btn-boot">
+            <span class="btn-hardware-tag">D0 • BOOT</span>
+            <span id="btn-boot-label" class="btn-action-label">ENTER</span>
+          </button>
+          <button id="btn-pwr" type="button" class="hardware-button btn-pwr">
+            <span class="btn-hardware-tag">D18 • PWR</span>
+            <span id="btn-pwr-label" class="btn-action-label">START</span>
+          </button>
+        </div>
+
+        <!-- Board Footer -->
+        <div class="board-footer">
+          <button id="btn-sound" type="button" class="sound-toggle-btn">🔊 Sound ON</button>
+          <span class="footer-legend">Tap buttons or use [B] & [P]</span>
+        </div>
+      </div>
+    </div>
+    <script src="./bundle.js"></script>
+  </body>
+</html>

@@ -1,0 +1,240 @@
+/* Mobile-First Handheld E-Paper Enclosure Styles */
+
+:root {
+  --pcb-bg: #14171a;
+  --pcb-surface: #1e2227;
+  --pcb-border: #2c323b;
+  --silk-gold: #c5a059;
+  --silk-white: #8b949e;
+  --paper-bg: #ece8e1;
+  --ink-color: #161616;
+  --led-blue: #00bfff;
+  --btn-face: #2a2f38;
+  --btn-face-active: #1a1e24;
+  --btn-border: #3d4450;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0b0d0f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  touch-action: manipulation;
+}
+
+.emulator-viewport {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+}
+
+/* Handheld PCB Shell */
+.board-shell {
+  width: 100%;
+  max-width: 380px;
+  background: var(--pcb-bg);
+  border: 2px solid var(--pcb-border);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  position: relative;
+}
+
+/* PCB Header */
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.header-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-text {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--silk-gold);
+}
+
+.chip-text {
+  font-size: 8px;
+  color: var(--silk-white);
+  letter-spacing: 0.08em;
+}
+
+/* Status LED */
+.led-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.led-label {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--silk-white);
+}
+
+.status-led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #202b38;
+  border: 1px solid #334455;
+  transition: all 0.15s ease;
+}
+
+.status-led.led-active {
+  background: var(--led-blue);
+  box-shadow: 0 0 10px var(--led-blue), 0 0 16px var(--led-blue);
+}
+
+/* Screen Bezel & Canvas */
+.screen-frame {
+  width: 100%;
+  background: var(--pcb-surface);
+  border: 1px solid var(--pcb-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.screen-inner-bezel {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  background: var(--paper-bg);
+  border: 2px solid #111;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.epaper-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  transition: opacity 0.1s ease;
+}
+
+/* Bi-stable flash animation effect */
+.epaper-flash {
+  filter: invert(1);
+  opacity: 0.4;
+}
+
+/* Mobile-First Thumb Controls */
+.controls-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.hardware-button {
+  background: linear-gradient(180deg, var(--btn-face) 0%, #1e2228 100%);
+  border: 1px solid var(--btn-border);
+  border-bottom: 5px solid #101216;
+  border-radius: 14px;
+  padding: 14px 10px;
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.45);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.05s ease, border-bottom 0.05s ease, background 0.05s ease, box-shadow 0.05s ease;
+}
+
+.hardware-button:active {
+  transform: translateY(4px);
+  border-bottom: 1px solid #101216;
+  background: var(--btn-face-active);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-hardware-tag {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--silk-gold);
+}
+
+.btn-action-label {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #f0f3f6;
+  text-transform: uppercase;
+}
+
+/* Button color accents */
+.btn-boot {
+  border-left: 3px solid #388bfd;
+}
+
+.btn-pwr {
+  border-right: 3px solid #f85149;
+}
+
+/* Footer & Sound Toggle */
+.board-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.sound-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--pcb-border);
+  border-radius: 6px;
+  color: var(--silk-white);
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sound-toggle-btn:hover {
+  color: #fff;
+  border-color: #58a6ff;
+}
+
+.footer-legend {
+  font-size: 9px;
+  color: #6e7681;
+}
