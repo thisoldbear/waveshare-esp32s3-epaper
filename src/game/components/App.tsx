@@ -2,6 +2,7 @@ import { h } from "preact";
 import { GameState } from "../types";
 import { TitleScreen } from "./TitleScreen";
 import { LampScreen } from "./LampScreen";
+import { RestScreen } from "./RestScreen";
 import { EnemyScreen } from "./EnemyScreen";
 import { ChestScreen } from "./ChestScreen";
 import { GameOverScreen } from "./GameOverScreen";
@@ -15,6 +16,8 @@ export function App(props: { state: GameState }) {
       return <TitleScreen state={state} />;
     case "lamp":
       return <LampScreen state={state} />;
+    case "rest":
+      return <RestScreen state={state} />;
     case "enemy":
       return <EnemyScreen state={state} />;
     case "chest":

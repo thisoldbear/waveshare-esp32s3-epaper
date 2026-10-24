@@ -114,9 +114,20 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         state.screen = "victory";
         return { needsFullRefresh: true };
       }
-      startNextEncounter(state);
+      const heal = rollD3();
+      state.hp = Math.min(state.maxHp, state.hp + heal);
+      state.restHeal = heal;
+      state.screen = "rest";
       // Milestone clean refresh on lamp 5 to prevent ghosting buildup
       return { needsFullRefresh: state.lamps === 5 };
+    }
+  }
+
+  // Handle Rest Screen
+  if (state.screen === "rest") {
+    if (button === "BOOT" || button === "PWR") {
+      startNextEncounter(state);
+      return { needsFullRefresh: false };
     }
   }
 

@@ -63,6 +63,7 @@ export interface ChestState {
 export type GameScreen =
   | "title"
   | "lamp"
+  | "rest"
   | "enemy"
   | "chest"
   | "victory"
@@ -78,5 +79,6 @@ export interface GameState {
   combat?: CombatState;
   chest?: ChestState;
   lampMessage?: string;
+  restHeal?: number;
   deathCause?: string;
 }

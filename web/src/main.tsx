@@ -27,6 +27,8 @@ function getButtonLabels(): { boot: string; pwr: string } {
       return { boot: "ENTER", pwr: "START" };
     case "lamp":
       return { boot: "LIGHT", pwr: "LIGHT" };
+    case "rest":
+      return { boot: "PROCEED", pwr: "PROCEED" };
     case "enemy":
       if (!state.combat) return { boot: "ACTION", pwr: "PASS" };
       if (state.combat.phase === "encounter") return { boot: "FIGHT", pwr: "PASS" };
