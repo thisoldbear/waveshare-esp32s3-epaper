@@ -187,8 +187,11 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
           enemy.hp = Math.max(0, enemy.hp - dmg);
           combat.playerDamageDealt = dmg;
           if (enemy.hp <= 0) {
+            const heal = rollD3();
+            state.hp = Math.min(state.maxHp, state.hp + heal);
+            combat.healAmount = heal;
             combat.phase = "enemy_defeated";
-            combat.logMessage = `You struck down the ${enemy.name}!`;
+            combat.logMessage = `Struck down ${enemy.name}! (+${heal} HP)`;
             return { needsFullRefresh: false };
           }
           combat.phase = "player_strike_result";

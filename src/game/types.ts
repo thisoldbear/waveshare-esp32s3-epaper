@@ -50,6 +50,7 @@ export interface CombatState {
   enemyHit?: boolean;
   enemyDamageDealt?: number;
   fleeDamage?: number;
+  healAmount?: number;
   logMessage: string;
 }
 

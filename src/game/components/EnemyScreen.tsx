@@ -138,20 +138,20 @@ export function EnemyScreen(props: { state: GameState }) {
 
       {phase === "enemy_defeated" && (
         <box x={8} y={72} w={184} h={96}>
-          <icon name="skull" x={100} y={92} />
-          <text x={100} y={116} text="VICTORY!" size={13} align="center" />
+          <icon name="skull" x={100} y={90} />
+          <text x={100} y={112} text="VICTORY!" size={13} align="center" />
           <text
             x={100}
-            y={134}
-            text={`The ${enemy.name} has been defeated.`}
+            y={128}
+            text={`The ${enemy.name} was slain.`}
             size={9}
             align="center"
           />
           <text
             x={100}
-            y={148}
-            text="The dark path lies open once more."
-            size={8}
+            y={142}
+            text={`Recovered +${combat.healAmount || 1} HP! (HP: ${state.hp}/${state.maxHp})`}
+            size={9}
             align="center"
           />
           <footer bootLabel="PROCEED" pwrLabel="PROCEED" />
