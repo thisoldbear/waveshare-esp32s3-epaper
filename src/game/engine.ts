@@ -101,7 +101,7 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
       phase: "encounter",
       logMessage: `A ${enemy.name} emerges from the shadowed mist!`
     };
-    return { needsFullRefresh: true };
+    return { needsFullRefresh: false };
   }
 
   // Handle Lamp Screen
@@ -113,7 +113,8 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         return { needsFullRefresh: true };
       }
       startNextEncounter(state);
-      return { needsFullRefresh: true };
+      // Milestone clean refresh on lamp 5 to prevent ghosting buildup
+      return { needsFullRefresh: state.lamps === 5 };
     }
   }
 
@@ -166,7 +167,7 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
       } else if (button === "PWR") {
         // [PWR] Pass -> Avoid combat
         startNextEncounter(state);
-        return { needsFullRefresh: true };
+        return { needsFullRefresh: false };
       }
     } else if (combat.phase === "enemy_turn_result") {
       if (button === "BOOT" || button === "PWR") {
@@ -245,7 +246,7 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
     } else if (combat.phase === "enemy_defeated" || combat.phase === "fled") {
       if (button === "BOOT" || button === "PWR") {
         startNextEncounter(state);
-        return { needsFullRefresh: true };
+        return { needsFullRefresh: false };
       }
     }
   }
@@ -276,13 +277,13 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         chest.selectedIndex = 0;
         if (chest.items.length === 0) {
           startNextEncounter(state);
-          return { needsFullRefresh: true };
+          return { needsFullRefresh: false };
         }
         return { needsFullRefresh: false };
       } else {
         // Selected "Leave"
         startNextEncounter(state);
-        return { needsFullRefresh: true };
+        return { needsFullRefresh: false };
       }
     }
   }
