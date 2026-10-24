@@ -87,6 +87,8 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         (state as any)[key] = (next as any)[key];
       }
     }
+    state.combat = undefined;
+    state.chest = undefined;
     return { needsFullRefresh: true };
   }
 

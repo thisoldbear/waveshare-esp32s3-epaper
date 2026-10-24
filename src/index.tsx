@@ -16,16 +16,8 @@ let state: GameState = createInitialState();
 let isRendering = false;
 let lastPressTime = 0;
 
-function flashLed(): void {
-  try {
-    digitalWrite(D3, 1);
-    setTimeout(() => {
-      digitalWrite(D3, 0);
-    }, 100);
-  } catch (e) {
-    // LED fallback
-  }
-}
+// Reusable 200x200 1-bit monochrome graphics buffer (avoids 5KB heap allocation on every frame)
+const canvas = Graphics.createArrayBuffer(EPD_WIDTH, EPD_HEIGHT, 1, { msb: true });
 
 function renderDisplay(fullRefresh: boolean): Promise<void> {
   if (isRendering || !epd) {
@@ -39,18 +31,15 @@ function renderDisplay(fullRefresh: boolean): Promise<void> {
   );
 
   try {
-    // Allocate 200x200 monochrome buffer (5000 bytes)
-    const g = Graphics.createArrayBuffer(EPD_WIDTH, EPD_HEIGHT, 1, { msb: true });
-
-    // Render Preact component tree directly to Graphics canvas
+    // Render Preact component tree directly to persistent Graphics canvas
     const vdomTree = <App state={state} />;
-    renderToGraphics(vdomTree, g);
+    renderToGraphics(vdomTree, canvas);
 
     const refreshPromise = fullRefresh
-      ? epd.display(g.buffer)
-      : epd.displayPartial(g.buffer).catch((err) => {
+      ? epd.display(canvas.buffer)
+      : epd.displayPartial(canvas.buffer).catch((err) => {
           console.log("[DarkWood] Partial refresh fallback:", err);
-          return epd!.display(g.buffer);
+          return epd!.display(canvas.buffer);
         });
 
     return refreshPromise
@@ -70,9 +59,8 @@ function renderDisplay(fullRefresh: boolean): Promise<void> {
 }
 
 function onButton(button: "BOOT" | "PWR"): void {
-  // CRITICAL: Reject button input while screen is actively refreshing
+  // Guard against button presses while display hardware is actively updating
   if (isRendering) {
-    console.log(`[DarkWood] Ignored [${button}]: Display is currently busy.`);
     return;
   }
 
@@ -82,8 +70,7 @@ function onButton(button: "BOOT" | "PWR"): void {
   }
   lastPressTime = now;
 
-  flashLed();
-  console.log(`\n>>> [${button} Pressed] Current Screen: ${state.screen} <<<`);
+  console.log(`\n>>> [${button} Pressed] Screen: ${state.screen} <<<`);
   const result = handleInput(state, button);
   renderDisplay(result.needsFullRefresh);
 }

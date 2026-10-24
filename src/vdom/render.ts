@@ -35,7 +35,6 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
   const tag = typeof type === "string" ? type.toLowerCase() : "";
 
   if (tag === "screen") {
-    // Clear screen to white (1)
     g.setColor(1);
     g.fillRect(0, 0, 199, 199);
     g.setColor(0);
@@ -50,8 +49,7 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
     const y = props.y || 0;
     const w = props.w || 10;
     const h = props.h || 10;
-    const color = props.color !== undefined ? props.color : 0;
-    g.setColor(color);
+    g.setColor(props.color || 0);
     if (props.fill) {
       g.fillRect(x, y, x + w - 1, y + h - 1);
     }
@@ -59,13 +57,10 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
       g.drawRect(x, y, x + w - 1, y + h - 1);
     }
   } else if (tag === "line") {
-    const color = props.color !== undefined ? props.color : 0;
-    g.setColor(color);
+    g.setColor(props.color || 0);
     g.drawLine(props.x1 || 0, props.y1 || 0, props.x2 || 0, props.y2 || 0);
   } else if (tag === "text") {
     const size = props.size || 12;
-    const color = props.color !== undefined ? props.color : 0;
-    const font = props.font || "Vector";
     const textStr = String(
       props.text !== undefined
         ? props.text
@@ -73,10 +68,10 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
         ? props.children[0]
         : ""
     );
-    g.setFont(font, size);
-    g.setColor(color);
+    g.setFont(props.font || "Vector", size);
+    g.setColor(props.color || 0);
 
-    let x = props.x !== undefined ? props.x : 0;
+    let x = props.x || 0;
     const width = g.stringWidth(textStr);
     if (props.align === "center") {
       const centerX = props.x !== undefined ? props.x : 100;
@@ -85,7 +80,7 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
       const rightX = props.x !== undefined ? props.x : 196;
       x = rightX - width;
     }
-    g.drawString(textStr, x, props.y !== undefined ? props.y : 0);
+    g.drawString(textStr, x, props.y || 0);
   } else if (tag === "header") {
     // Header bar y=0..20
     g.setColor(0);

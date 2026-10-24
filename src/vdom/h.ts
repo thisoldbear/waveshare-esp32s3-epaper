@@ -1,37 +1,26 @@
 import { VNode, VNodeChild } from "./types";
 
 export function h(type: any, props: any): VNode {
-  props = props || {};
-  const flatChildren: VNodeChild[] = [];
-
-  function addChildren(c: any): void {
-    if (c === null || c === undefined || typeof c === "boolean") return;
-    if (Array.isArray(c)) {
-      for (let i = 0; i < c.length; i++) {
-        addChildren(c[i]);
-      }
-    } else {
-      flatChildren.push(c);
-    }
-  }
+  const p = props || {};
+  const children: VNodeChild[] = [];
 
   for (let i = 2; i < arguments.length; i++) {
-    addChildren(arguments[i]);
-  }
-
-  const finalProps: any = {};
-  for (const key in props) {
-    if (Object.prototype.hasOwnProperty.call(props, key)) {
-      finalProps[key] = props[key];
+    const c = arguments[i];
+    if (c === null || c === undefined || typeof c === "boolean") continue;
+    if (Array.isArray(c)) {
+      for (let j = 0; j < c.length; j++) {
+        const item = c[j];
+        if (item !== null && item !== undefined && typeof item !== "boolean") {
+          children.push(item);
+        }
+      }
+    } else {
+      children.push(c);
     }
   }
-  finalProps.children = flatChildren;
 
-  return {
-    type,
-    props: finalProps,
-    key: props.key
-  };
+  p.children = children;
+  return { type, props: p, key: p.key };
 }
 
 export function Fragment(props: { children?: VNodeChild[] }): any {
