@@ -2,7 +2,7 @@ import { h } from "preact";
 import { GameState } from "../types";
 
 export function EnemyScreen(props: { state: GameState }) {
-  const { state } = props;
+  const state = props.state;
   const combat = state.combat;
   if (!combat) return <screen />;
 

@@ -2,7 +2,7 @@ import { h } from "preact";
 import { GameState } from "../types";
 
 export function ChestScreen(props: { state: GameState }) {
-  const { state } = props;
+  const state = props.state;
   const chest = state.chest;
   if (!chest) return <screen />;
 

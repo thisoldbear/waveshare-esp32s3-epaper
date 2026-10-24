@@ -8,7 +8,7 @@ import { GameOverScreen } from "./GameOverScreen";
 import { VictoryScreen } from "./VictoryScreen";
 
 export function App(props: { state: GameState }) {
-  const { state } = props;
+  const state = props.state;
 
   switch (state.screen) {
     case "title":

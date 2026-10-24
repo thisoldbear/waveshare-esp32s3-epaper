@@ -149,7 +149,14 @@ function main(): void {
 }
 
 // Register for power-on / wake restore
-(globalThis as any).onInit = main;
+if (typeof global !== "undefined") {
+  global.onInit = main;
+  global.main = main;
+}
+if (typeof globalThis !== "undefined") {
+  (globalThis as any).onInit = main;
+  (globalThis as any).main = main;
+}
 
 // Run immediately upon code upload
 main();

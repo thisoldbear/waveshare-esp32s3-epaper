@@ -2,6 +2,8 @@
 
 interface Pin {}
 
+declare const global: any;
+
 declare const D0: Pin;
 declare const D3: Pin;
 declare const D6: Pin;

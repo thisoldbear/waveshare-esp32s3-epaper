@@ -2,7 +2,7 @@ import { h } from "preact";
 import { GameState } from "../types";
 
 export function VictoryScreen(props: { state: GameState }) {
-  const { state } = props;
+  const state = props.state;
 
   return (
     <screen doubleBorder={true}>

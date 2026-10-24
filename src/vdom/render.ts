@@ -21,7 +21,9 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
     return;
   }
 
-  const { type, props } = vnode as VNode;
+  const node = vnode as VNode;
+  const type = node.type;
+  const props = node.props;
 
   // Function component
   if (typeof type === "function") {
