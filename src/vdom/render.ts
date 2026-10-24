@@ -143,13 +143,6 @@ export function renderToGraphics(vnode: VNodeChild, g: Graphics): void {
     const roll = props.roll || 1;
     drawDiceFace(g, x, y, roll, 28);
 
-    if (props.label) {
-      g.setFont("Vector", 10);
-      g.setColor(0);
-      const lw = g.stringWidth(props.label);
-      g.drawString(props.label, x + 14 - Math.floor(lw / 2), y - 13);
-    }
-
     if (props.hit !== undefined) {
       g.setFont("Vector", 11);
       if (props.hit) {

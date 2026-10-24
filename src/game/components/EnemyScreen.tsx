@@ -84,10 +84,9 @@ export function EnemyScreen(props: { state: GameState }) {
         <box x={8} y={72} w={184} h={96}>
           <text x={100} y={78} text="PLAYER ATTACK" size={11} align="center" />
           <dicebox
-            x={50}
+            x={55}
             y={95}
             roll={combat.lastPlayerRoll || 1}
-            label="D6 Roll"
             hit={combat.playerHit}
           />
           <text
@@ -112,10 +111,9 @@ export function EnemyScreen(props: { state: GameState }) {
         <box x={8} y={72} w={184} h={96}>
           <text x={100} y={78} text={`${enemy.name.toUpperCase()} ATTACKS`} size={11} align="center" />
           <dicebox
-            x={50}
+            x={55}
             y={95}
             roll={combat.lastEnemyRoll || 1}
-            label="D6 Roll"
             hit={combat.enemyHit}
           />
           <text
