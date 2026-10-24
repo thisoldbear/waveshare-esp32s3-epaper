@@ -8,29 +8,33 @@ export function LampScreen(props: { state: GameState }) {
 
   return (
     <screen border={true}>
-      <header title="LANTERN" hp={state.hp} maxHp={state.maxHp} lamps={state.lamps} />
-      <box x={15} y={30} w={170} h={135} />
-      <icon name="lamp" x={100} y={55} />
-      <text x={100} y={85} text="SACRED LANTERN" size={13} align="center" />
+      <header title="SACRED LAMP" hp={state.hp} maxHp={state.maxHp} lamps={state.lamps} />
+      <box x={14} y={26} w={172} h={140} />
+      <icon name="lamp" x={100} y={48} />
+      <text x={100} y={70} text="SACRED LAMP FOUND!" size={11} align="center" />
+      
+      {/* Progress Box */}
+      <box x={28} y={85} w={144} h={24} fill={false} />
       <text
         x={100}
-        y={105}
-        text={`Lanterns Lit: ${currentLamps} / ${targetLamps}`}
-        size={11}
+        y={92}
+        text={`PROGRESS: ${currentLamps} / ${targetLamps} LIT`}
+        size={10}
         align="center"
       />
-      <line x1={30} y1={122} x2={170} y2={122} />
+
+      <line x1={25} y1={118} x2={175} y2={118} />
       <text
         x={100}
-        y={130}
-        text="Light this lantern to banish"
+        y={126}
+        text="Light this lamp to dispel"
         size={9}
         align="center"
       />
       <text
         x={100}
-        y={142}
-        text="the suffocating gloom."
+        y={138}
+        text="the suffocating black gloom."
         size={9}
         align="center"
       />

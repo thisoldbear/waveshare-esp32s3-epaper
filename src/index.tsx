@@ -32,37 +32,52 @@ function renderDisplay(fullRefresh: boolean): Promise<void> {
     return Promise.resolve();
   }
   isRendering = true;
+  digitalWrite(D3, 1); // Visual indicator: LED ON while updating e-paper
 
   console.log(
     `[DarkWood] Screen: ${state.screen} | HP: ${state.hp}/${state.maxHp} | Lamps: ${state.lamps}/10 | Full: ${fullRefresh}`
   );
 
-  // Allocate 200x200 monochrome buffer (5000 bytes)
-  const g = Graphics.createArrayBuffer(EPD_WIDTH, EPD_HEIGHT, 1, { msb: true });
+  try {
+    // Allocate 200x200 monochrome buffer (5000 bytes)
+    const g = Graphics.createArrayBuffer(EPD_WIDTH, EPD_HEIGHT, 1, { msb: true });
 
-  // Render Preact component tree directly to Graphics canvas
-  const vdomTree = <App state={state} />;
-  renderToGraphics(vdomTree, g);
+    // Render Preact component tree directly to Graphics canvas
+    const vdomTree = <App state={state} />;
+    renderToGraphics(vdomTree, g);
 
-  const refreshPromise = fullRefresh
-    ? epd.display(g.buffer)
-    : epd.displayPartial(g.buffer).catch((err) => {
-        console.log("[DarkWood] Partial refresh fallback:", err);
-        return epd!.display(g.buffer);
+    const refreshPromise = fullRefresh
+      ? epd.display(g.buffer)
+      : epd.displayPartial(g.buffer).catch((err) => {
+          console.log("[DarkWood] Partial refresh fallback:", err);
+          return epd!.display(g.buffer);
+        });
+
+    return refreshPromise
+      .catch((err) => {
+        console.log("[DarkWood] Render error:", err);
+      })
+      .then(() => {
+        isRendering = false;
+        digitalWrite(D3, 0); // Visual indicator: LED OFF when ready
       });
-
-  return refreshPromise
-    .catch((err) => {
-      console.log("[DarkWood] Render error:", err);
-    })
-    .then(() => {
-      isRendering = false;
-    });
+  } catch (err) {
+    console.log("[DarkWood] Render sync error:", err);
+    isRendering = false;
+    digitalWrite(D3, 0);
+    return Promise.resolve();
+  }
 }
 
 function onButton(button: "BOOT" | "PWR"): void {
+  // CRITICAL: Reject button input while screen is actively refreshing
+  if (isRendering) {
+    console.log(`[DarkWood] Ignored [${button}]: Display is currently busy.`);
+    return;
+  }
+
   const now = Date.now();
-  if (now - lastPressTime < 450) {
+  if (now - lastPressTime < 400) {
     return; // Debounce guard
   }
   lastPressTime = now;

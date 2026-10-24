@@ -155,6 +155,22 @@ export class WaveshareEPaper154 {
     this.sendData(l[158]);
   }
 
+  private configureDisplay(): void {
+    this.sendCommand(0x01); // Driver output control
+    this.sendData([0xC7, 0x00, 0x01]);
+
+    this.sendCommand(0x11); // Data entry mode
+    this.sendData(0x01);
+
+    this.setWindows(0, EPD_HEIGHT - 1, EPD_WIDTH - 1, 0);
+
+    this.sendCommand(0x3C); // Border waveform
+    this.sendData(0x01);
+
+    this.sendCommand(0x18); // Temperature sensor control
+    this.sendData(0x80);
+  }
+
   public init(): Promise<void> {
     console.log("[EPD] Powering on display (D6 = 0)...");
 
@@ -175,14 +191,6 @@ export class WaveshareEPaper154 {
     });
 
     this.currentMode = "none";
-    return this.setFullMode();
-  }
-
-  public setFullMode(): Promise<void> {
-    if (this.currentMode === "full") {
-      return Promise.resolve();
-    }
-    console.log("[EPD] Configuring FULL refresh mode (WF_FULL_1IN54)...");
 
     // Hardware reset pulse: 1 -> 0 (20ms) -> 1 (50ms)
     digitalWrite(this.rstPin, 1);
@@ -201,71 +209,39 @@ export class WaveshareEPaper154 {
         return this.waitUntilIdle();
       })
       .then(() => {
-        this.sendCommand(0x01); // Driver output control
-        this.sendData([0xC7, 0x00, 0x01]);
-
-        this.sendCommand(0x11); // Data entry mode
-        this.sendData(0x01);
-
-        this.setWindows(0, EPD_HEIGHT - 1, EPD_WIDTH - 1, 0);
-
-        this.sendCommand(0x3C); // Border waveform
-        this.sendData(0x01);
-
-        this.sendCommand(0x18); // Temperature sensor control
-        this.sendData(0x80);
-
-        this.sendCommand(0x22); // Load temperature & waveform setting
-        this.sendData(0xB1);
-        this.sendCommand(0x20); // Master activation
-        return this.waitUntilIdle();
-      })
-      .then(() => {
-        this.setCursor(0, EPD_HEIGHT - 1);
-        return this.waitUntilIdle();
-      })
-      .then(() => {
+        this.configureDisplay();
         this.setLut(WF_FULL_1IN54);
         this.currentMode = "full";
-        console.log("[EPD] Full refresh mode active.");
+        console.log("[EPD] Hardware initialized & Full refresh LUT loaded.");
       });
+  }
+
+  public setFullMode(): Promise<void> {
+    if (this.currentMode === "full") {
+      return Promise.resolve();
+    }
+    console.log("[EPD] Switching to FULL refresh mode...");
+    this.configureDisplay();
+    this.setLut(WF_FULL_1IN54);
+    this.currentMode = "full";
+    return Promise.resolve();
   }
 
   public setPartialMode(): Promise<void> {
     if (this.currentMode === "partial") {
       return Promise.resolve();
     }
-    console.log("[EPD] Configuring PARTIAL refresh mode (WF_PARTIAL_1IN54_0)...");
+    console.log("[EPD] Switching to PARTIAL refresh mode...");
+    this.configureDisplay();
+    this.setLut(WF_PARTIAL_1IN54_0);
+    this.sendCommand(0x37);
+    this.sendData([0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00]);
 
-    // Hardware reset pulse: 1 -> 0 (5ms) -> 1 (20ms)
-    digitalWrite(this.rstPin, 1);
-    return delayMs(20)
-      .then(() => {
-        digitalWrite(this.rstPin, 0);
-        return delayMs(5);
-      })
-      .then(() => {
-        digitalWrite(this.rstPin, 1);
-        return delayMs(20);
-      })
-      .then(() => this.waitUntilIdle())
-      .then(() => {
-        this.setLut(WF_PARTIAL_1IN54_0);
-        this.sendCommand(0x37);
-        this.sendData([0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00]);
+    this.sendCommand(0x3C); // BorderWaveform
+    this.sendData(0x80);
 
-        this.sendCommand(0x3C); // BorderWaveform
-        this.sendData(0x80);
-
-        this.sendCommand(0x22);
-        this.sendData(0xC0);
-        this.sendCommand(0x20);
-        return this.waitUntilIdle();
-      })
-      .then(() => {
-        this.currentMode = "partial";
-        console.log("[EPD] Partial refresh mode active.");
-      });
+    this.currentMode = "partial";
+    return Promise.resolve();
   }
 
   public display(buffer: ArrayBuffer | Uint8Array): Promise<void> {
@@ -300,11 +276,18 @@ export class WaveshareEPaper154 {
       this.sendCommand(0x24); // Write RAM black/white
       this.sendData(bytes);
 
+      console.log("[EPD] Triggering fast partial refresh (0x22 0xCF + 0x20)...");
       this.sendCommand(0x22); // Display Update Control 2 (Partial)
       this.sendData(0xCF);
       this.sendCommand(0x20); // Master Activation
 
-      return this.waitUntilIdle(5000);
+      return this.waitUntilIdle(5000).then(() => {
+        // Keep 0x26 RAM synchronized with the new frame
+        this.setCursor(0, EPD_HEIGHT - 1);
+        this.sendCommand(0x26);
+        this.sendData(bytes);
+        console.log("[EPD] Partial refresh complete.");
+      });
     });
   }
 

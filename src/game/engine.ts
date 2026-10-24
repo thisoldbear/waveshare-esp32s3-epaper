@@ -90,9 +90,17 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
     return { needsFullRefresh: true };
   }
 
-  // Handle Title Screen
+  // Handle Title Screen -> Enter the Dark Wood
   if (state.screen === "title") {
-    startNextEncounter(state);
+    // First encounter plunges the adventurer straight into a monster encounter (Rat or Zombie)
+    const enemyRoll = rollD6() <= 3 ? 1 : 2;
+    const enemy = createEnemy(enemyRoll);
+    state.screen = "enemy";
+    state.combat = {
+      enemy,
+      phase: "encounter",
+      logMessage: `A ${enemy.name} emerges from the shadowed mist!`
+    };
     return { needsFullRefresh: true };
   }
 
