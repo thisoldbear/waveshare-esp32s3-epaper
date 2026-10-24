@@ -24,7 +24,7 @@ const graphics = new WebGraphics(canvasEl);
 function getButtonLabels(): { boot: string; pwr: string } {
   switch (state.screen) {
     case "title":
-      return { boot: "ENTER", pwr: "START" };
+      return { boot: "ENTER", pwr: "ENTER" };
     case "lamp":
       return { boot: "LIGHT", pwr: "LIGHT" };
     case "rest":
