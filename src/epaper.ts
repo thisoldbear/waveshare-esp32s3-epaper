@@ -67,6 +67,7 @@ export class WaveshareEPaper154 {
   private sckPin = D12;
   private mosiPin = D13;
   private spi = new (globalThis as any).SPI();
+  private currentMode: "none" | "full" | "partial" = "none";
 
   private sendCommand(cmd: number): void {
     digitalWrite(this.dcPin, 0); // DC = command
@@ -173,9 +174,19 @@ export class WaveshareEPaper154 {
       bits: 8
     });
 
+    this.currentMode = "none";
+    return this.setFullMode();
+  }
+
+  public setFullMode(): Promise<void> {
+    if (this.currentMode === "full") {
+      return Promise.resolve();
+    }
+    console.log("[EPD] Configuring FULL refresh mode (WF_FULL_1IN54)...");
+
     // Hardware reset pulse: 1 -> 0 (20ms) -> 1 (50ms)
     digitalWrite(this.rstPin, 1);
-    return delayMs(50)
+    return delayMs(20)
       .then(() => {
         digitalWrite(this.rstPin, 0);
         return delayMs(20);
@@ -186,12 +197,10 @@ export class WaveshareEPaper154 {
       })
       .then(() => this.waitUntilIdle())
       .then(() => {
-        console.log("[EPD] Sending SW Reset (0x12)...");
-        this.sendCommand(0x12);
+        this.sendCommand(0x12); // SW Reset
         return this.waitUntilIdle();
       })
       .then(() => {
-        console.log("[EPD] Configuring registers & LUT...");
         this.sendCommand(0x01); // Driver output control
         this.sendData([0xC7, 0x00, 0x01]);
 
@@ -216,35 +225,18 @@ export class WaveshareEPaper154 {
         return this.waitUntilIdle();
       })
       .then(() => {
-        this.setLut();
-        console.log("[EPD] Display initialized with LUT.");
+        this.setLut(WF_FULL_1IN54);
+        this.currentMode = "full";
+        console.log("[EPD] Full refresh mode active.");
       });
   }
 
-  public display(buffer: ArrayBuffer | Uint8Array): Promise<void> {
-    console.log("[EPD] Writing image to 0x24 and 0x26 RAM...");
-    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  public setPartialMode(): Promise<void> {
+    if (this.currentMode === "partial") {
+      return Promise.resolve();
+    }
+    console.log("[EPD] Configuring PARTIAL refresh mode (WF_PARTIAL_1IN54_0)...");
 
-    this.setCursor(0, EPD_HEIGHT - 1);
-    this.sendCommand(0x24); // Write RAM black/white
-    this.sendData(bytes);
-
-    this.setCursor(0, EPD_HEIGHT - 1);
-    this.sendCommand(0x26); // Write RAM red/previous
-    this.sendData(bytes);
-
-    console.log("[EPD] Triggering full refresh cycle (0x22 0xC7 + 0x20)...");
-    this.sendCommand(0x22); // Display Update Control 2
-    this.sendData(0xC7);
-    this.sendCommand(0x20); // Master Activation
-
-    return this.waitUntilIdle(10000).then(() => {
-      console.log("[EPD] Refresh cycle complete!");
-    });
-  }
-
-  public initPartial(): Promise<void> {
-    console.log("[EPD] Configuring partial refresh mode...");
     // Hardware reset pulse: 1 -> 0 (5ms) -> 1 (20ms)
     digitalWrite(this.rstPin, 1);
     return delayMs(20)
@@ -271,22 +263,49 @@ export class WaveshareEPaper154 {
         return this.waitUntilIdle();
       })
       .then(() => {
-        console.log("[EPD] Partial refresh mode ready.");
+        this.currentMode = "partial";
+        console.log("[EPD] Partial refresh mode active.");
       });
   }
 
+  public display(buffer: ArrayBuffer | Uint8Array): Promise<void> {
+    return this.setFullMode().then(() => {
+      console.log("[EPD] Writing image to 0x24 and 0x26 RAM for clean full refresh...");
+      const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+
+      this.setCursor(0, EPD_HEIGHT - 1);
+      this.sendCommand(0x24); // Write RAM black/white
+      this.sendData(bytes);
+
+      this.setCursor(0, EPD_HEIGHT - 1);
+      this.sendCommand(0x26); // Write RAM red/previous
+      this.sendData(bytes);
+
+      console.log("[EPD] Triggering clean full refresh cycle (0x22 0xC7 + 0x20)...");
+      this.sendCommand(0x22); // Display Update Control 2
+      this.sendData(0xC7);
+      this.sendCommand(0x20); // Master Activation
+
+      return this.waitUntilIdle(10000).then(() => {
+        console.log("[EPD] Full refresh complete (zero ghosting)!");
+      });
+    });
+  }
+
   public displayPartial(buffer: ArrayBuffer | Uint8Array): Promise<void> {
-    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+    return this.setPartialMode().then(() => {
+      const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
 
-    this.setCursor(0, EPD_HEIGHT - 1);
-    this.sendCommand(0x24); // Write RAM black/white
-    this.sendData(bytes);
+      this.setCursor(0, EPD_HEIGHT - 1);
+      this.sendCommand(0x24); // Write RAM black/white
+      this.sendData(bytes);
 
-    this.sendCommand(0x22); // Display Update Control 2 (Partial)
-    this.sendData(0xCF);
-    this.sendCommand(0x20); // Master Activation
+      this.sendCommand(0x22); // Display Update Control 2 (Partial)
+      this.sendData(0xCF);
+      this.sendCommand(0x20); // Master Activation
 
-    return this.waitUntilIdle(5000);
+      return this.waitUntilIdle(5000);
+    });
   }
 
   public sleep(): Promise<void> {

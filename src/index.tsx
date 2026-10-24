@@ -14,7 +14,6 @@ import { GameState } from "./game/types";
 let epd: WaveshareEPaper154 | null = null;
 let state: GameState = createInitialState();
 let isRendering = false;
-let partialModeActive = false;
 let lastPressTime = 0;
 
 function flashLed(): void {
@@ -45,24 +44,12 @@ function renderDisplay(fullRefresh: boolean): Promise<void> {
   const vdomTree = <App state={state} />;
   renderToGraphics(vdomTree, g);
 
-  let refreshPromise: Promise<void>;
-  if (fullRefresh || !partialModeActive) {
-    refreshPromise = epd
-      .display(g.buffer)
-      .then(() => {
-        return epd!.initPartial();
-      })
-      .then(() => {
-        partialModeActive = true;
+  const refreshPromise = fullRefresh
+    ? epd.display(g.buffer)
+    : epd.displayPartial(g.buffer).catch((err) => {
+        console.log("[DarkWood] Partial refresh fallback:", err);
+        return epd!.display(g.buffer);
       });
-  } else {
-    // Fast partial refresh (~300ms, zero flash)
-    refreshPromise = epd.displayPartial(g.buffer).catch((err) => {
-      console.log("[DarkWood] Partial refresh error, falling back to full:", err);
-      partialModeActive = false;
-      return epd!.display(g.buffer);
-    });
-  }
 
   return refreshPromise
     .catch((err) => {
@@ -130,7 +117,6 @@ function main(): void {
   console.log("=========================================\n");
 
   state = createInitialState();
-  partialModeActive = false;
 
   epd = new WaveshareEPaper154();
   epd
