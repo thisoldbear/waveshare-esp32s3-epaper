@@ -60,7 +60,7 @@ function renderDisplay(fullRefresh: boolean): void {
 
   if (fullRefresh) {
     isRendering = true;
-    if (ledEl) ledEl.classList.add("led-active");
+    if (ledEl) ledEl.classList.add("active");
     if (canvasEl) canvasEl.classList.add("epaper-flash");
 
     // E-paper bi-stable flash transition simulation
@@ -73,13 +73,13 @@ function renderDisplay(fullRefresh: boolean): void {
 
       setTimeout(() => {
         isRendering = false;
-        if (ledEl) ledEl.classList.remove("led-active");
+        if (ledEl) ledEl.classList.remove("active");
       }, 100);
     }, 300);
   } else {
     // Fast partial refresh: instant update + LED pulse
     isRendering = true;
-    if (ledEl) ledEl.classList.add("led-active");
+    if (ledEl) ledEl.classList.add("active");
     graphics.clear();
     const tree = <App state={state} />;
     renderToGraphics(tree, graphics as any);
@@ -87,7 +87,7 @@ function renderDisplay(fullRefresh: boolean): void {
 
     setTimeout(() => {
       isRendering = false;
-      if (ledEl) ledEl.classList.remove("led-active");
+      if (ledEl) ledEl.classList.remove("active");
     }, 120);
   }
 }
@@ -130,7 +130,7 @@ if (btnPwr) {
 if (btnSound) {
   btnSound.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
-    btnSound.textContent = soundEnabled ? "🔊 Sound ON" : "🔇 Sound OFF";
+    btnSound.textContent = soundEnabled ? "SOUND: ON" : "SOUND: OFF";
   });
 }
 
