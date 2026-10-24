@@ -2,6 +2,13 @@
   "compilerOptions": {
     "target": "ES5",
     "module": "CommonJS",
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
+    "baseUrl": ".",
+    "paths": {
+      "preact": ["src/vdom/index.ts"]
+    },
     "lib": ["ES5", "ES2015.Promise", "DOM"],
     "downlevelIteration": true,
     "strict": true,

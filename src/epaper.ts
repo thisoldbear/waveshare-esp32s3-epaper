@@ -30,6 +30,29 @@ const WF_FULL_1IN54 = new Uint8Array([
   0x22, 0x17, 0x41, 0x00, 0x32, 0x20
 ]);
 
+// Waveform LUT for 1.54" e-Paper partial refresh
+const WF_PARTIAL_1IN54_0 = new Uint8Array([
+  0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x40, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x00, 0x00, 0x00,
+  0x02, 0x17, 0x41, 0xB0, 0x32, 0x28
+]);
+
 function delayMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -109,25 +132,26 @@ export class WaveshareEPaper154 {
     this.sendData([y & 0xFF, (y >> 8) & 0xFF]);
   }
 
-  private setLut(): void {
+  private setLut(lut?: Uint8Array): void {
+    const l = lut || WF_FULL_1IN54;
     this.sendCommand(0x32);
-    this.sendData(WF_FULL_1IN54.subarray(0, 153));
+    this.sendData(l.subarray(0, 153));
 
     this.sendCommand(0x3F);
-    this.sendData(WF_FULL_1IN54[153]);
+    this.sendData(l[153]);
 
     this.sendCommand(0x03);
-    this.sendData(WF_FULL_1IN54[154]);
+    this.sendData(l[154]);
 
     this.sendCommand(0x04);
     this.sendData([
-      WF_FULL_1IN54[155],
-      WF_FULL_1IN54[156],
-      WF_FULL_1IN54[157]
+      l[155],
+      l[156],
+      l[157]
     ]);
 
     this.sendCommand(0x2C);
-    this.sendData(WF_FULL_1IN54[158]);
+    this.sendData(l[158]);
   }
 
   public init(): Promise<void> {
@@ -217,6 +241,52 @@ export class WaveshareEPaper154 {
     return this.waitUntilIdle(10000).then(() => {
       console.log("[EPD] Refresh cycle complete!");
     });
+  }
+
+  public initPartial(): Promise<void> {
+    console.log("[EPD] Configuring partial refresh mode...");
+    // Hardware reset pulse: 1 -> 0 (5ms) -> 1 (20ms)
+    digitalWrite(this.rstPin, 1);
+    return delayMs(20)
+      .then(() => {
+        digitalWrite(this.rstPin, 0);
+        return delayMs(5);
+      })
+      .then(() => {
+        digitalWrite(this.rstPin, 1);
+        return delayMs(20);
+      })
+      .then(() => this.waitUntilIdle())
+      .then(() => {
+        this.setLut(WF_PARTIAL_1IN54_0);
+        this.sendCommand(0x37);
+        this.sendData([0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00]);
+
+        this.sendCommand(0x3C); // BorderWaveform
+        this.sendData(0x80);
+
+        this.sendCommand(0x22);
+        this.sendData(0xC0);
+        this.sendCommand(0x20);
+        return this.waitUntilIdle();
+      })
+      .then(() => {
+        console.log("[EPD] Partial refresh mode ready.");
+      });
+  }
+
+  public displayPartial(buffer: ArrayBuffer | Uint8Array): Promise<void> {
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+
+    this.setCursor(0, EPD_HEIGHT - 1);
+    this.sendCommand(0x24); // Write RAM black/white
+    this.sendData(bytes);
+
+    this.sendCommand(0x22); // Display Update Control 2 (Partial)
+    this.sendData(0xCF);
+    this.sendCommand(0x20); // Master Activation
+
+    return this.waitUntilIdle(5000);
   }
 
   public sleep(): Promise<void> {
