@@ -47,7 +47,7 @@ export function EnemyScreen(props: { state: GameState }) {
             size={9}
             align="center"
           />
-          <footer bootLabel="FIGHT" pwrLabel="PASS" />
+          <footer bootLabel="FIGHT" pwrLabel="FLEE" />
         </box>
       )}
 

@@ -89,7 +89,7 @@ function setupButtons(): void {
     { repeat: true, edge: "falling", debounce: 120 }
   );
 
-  // PWR button (D18) -> Secondary Action / Select / Flee / Pass
+  // PWR button (D18) -> Secondary Action / Select / Flee
   try {
     pinMode(D18, "input_pullup", false);
     setWatch(

@@ -30,8 +30,8 @@ function getButtonLabels(): { boot: string; pwr: string } {
     case "rest":
       return { boot: "PROCEED", pwr: "PROCEED" };
     case "enemy":
-      if (!state.combat) return { boot: "ACTION", pwr: "PASS" };
-      if (state.combat.phase === "encounter") return { boot: "FIGHT", pwr: "PASS" };
+      if (!state.combat) return { boot: "ACTION", pwr: "FLEE" };
+      if (state.combat.phase === "encounter") return { boot: "FIGHT", pwr: "FLEE" };
       if (state.combat.phase === "player_turn") return { boot: "STRIKE", pwr: "FLEE" };
       if (state.combat.phase === "player_strike_result" || state.combat.phase === "enemy_turn_result") {
         return { boot: "CONTINUE", pwr: "CONTINUE" };

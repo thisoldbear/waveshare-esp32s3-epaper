@@ -29,7 +29,7 @@ export interface Item {
 }
 
 export type CombatPhase =
-  | "encounter"             // Encountered monster: [BOOT] Fight, [PWR] Pass
+  | "encounter"             // Encountered monster: [BOOT] Fight, [PWR] Flee
   | "priority_roll"         // Rolling for initiative
   | "player_turn"           // [BOOT] Strike, [PWR] Flee
   | "player_strike_result"  // Player attack outcome: [BOOT] Continue

@@ -178,8 +178,17 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
           return { needsFullRefresh: false };
         }
       } else if (button === "PWR") {
-        // [PWR] Pass -> Avoid combat
-        startNextEncounter(state);
+        // [PWR] Flee -> Escape through thorns taking D3 damage
+        const fleeDmg = rollD3();
+        state.hp = Math.max(0, state.hp - fleeDmg);
+        combat.fleeDamage = fleeDmg;
+        if (state.hp <= 0) {
+          state.screen = "game_over";
+          state.deathCause = `Felled while escaping ${enemy.name}`;
+          return { needsFullRefresh: true };
+        }
+        combat.phase = "fled";
+        combat.logMessage = `Fled through thorns! Took ${fleeDmg} dmg.`;
         return { needsFullRefresh: false };
       }
     } else if (combat.phase === "enemy_turn_result") {
