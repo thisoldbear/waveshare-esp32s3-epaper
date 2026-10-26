@@ -174,14 +174,28 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
           return { needsFullRefresh: false };
         }
       } else if (button === "PWR") {
-        // [PWR] Flee -> Escape combat at the cost of 1 lit lamp going out
-        combat.lampLost = state.lamps > 0;
-        state.lamps = Math.max(0, state.lamps - 1);
-        combat.phase = "fled";
-        combat.logMessage = combat.lampLost
-          ? "Fled into the dark! A lamp went out."
-          : "Fled into the dark!";
-        return { needsFullRefresh: false };
+        // [PWR] Flee -> Lose 1 lit lamp if any are lit; otherwise take D3 damage in pitch darkness
+        if (state.lamps > 0) {
+          combat.lampLost = true;
+          combat.fleeDamage = 0;
+          state.lamps -= 1;
+          combat.phase = "fled";
+          combat.logMessage = "Fled into the dark! A lamp went out.";
+          return { needsFullRefresh: false };
+        } else {
+          combat.lampLost = false;
+          const fleeDmg = rollD3();
+          state.hp = Math.max(0, state.hp - fleeDmg);
+          combat.fleeDamage = fleeDmg;
+          if (state.hp <= 0) {
+            state.screen = "game_over";
+            state.deathCause = `Felled while escaping ${enemy.name}`;
+            return { needsFullRefresh: true };
+          }
+          combat.phase = "fled";
+          combat.logMessage = `Fled in pitch black! Took ${fleeDmg} dmg.`;
+          return { needsFullRefresh: false };
+        }
       }
     } else if (combat.phase === "enemy_turn_result") {
       if (button === "BOOT" || button === "PWR") {
@@ -218,14 +232,28 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         }
         return { needsFullRefresh: false };
       } else if (button === "PWR") {
-        // [PWR] Flee -> Escape combat at the cost of 1 lit lamp going out
-        combat.lampLost = state.lamps > 0;
-        state.lamps = Math.max(0, state.lamps - 1);
-        combat.phase = "fled";
-        combat.logMessage = combat.lampLost
-          ? "Fled into the dark! A lamp went out."
-          : "Fled into the dark!";
-        return { needsFullRefresh: false };
+        // [PWR] Flee -> Lose 1 lit lamp if any are lit; otherwise take D3 damage in pitch darkness
+        if (state.lamps > 0) {
+          combat.lampLost = true;
+          combat.fleeDamage = 0;
+          state.lamps -= 1;
+          combat.phase = "fled";
+          combat.logMessage = "Fled into the dark! A lamp went out.";
+          return { needsFullRefresh: false };
+        } else {
+          combat.lampLost = false;
+          const fleeDmg = rollD3();
+          state.hp = Math.max(0, state.hp - fleeDmg);
+          combat.fleeDamage = fleeDmg;
+          if (state.hp <= 0) {
+            state.screen = "game_over";
+            state.deathCause = `Felled while escaping ${enemy.name}`;
+            return { needsFullRefresh: true };
+          }
+          combat.phase = "fled";
+          combat.logMessage = `Fled in pitch black! Took ${fleeDmg} dmg.`;
+          return { needsFullRefresh: false };
+        }
       }
     } else if (combat.phase === "player_strike_result") {
       if (button === "BOOT" || button === "PWR") {

@@ -72,7 +72,11 @@ export function EnemyScreen(props: { state: GameState }) {
           <text
             x={100}
             y={140}
-            text="Fleeing extinguishes 1 lit lamp."
+            text={
+              state.lamps > 0
+                ? "Fleeing extinguishes 1 lit lamp."
+                : "No lamps lit: Fleeing costs 1-3 HP."
+            }
             size={9}
             align="center"
           />
@@ -162,7 +166,11 @@ export function EnemyScreen(props: { state: GameState }) {
           <text
             x={100}
             y={98}
-            text="You escaped into the dark mist."
+            text={
+              combat.lampLost
+                ? "You escaped into the dark mist."
+                : "You stumbled in pitch darkness!"
+            }
             size={9}
             align="center"
           />
@@ -172,7 +180,7 @@ export function EnemyScreen(props: { state: GameState }) {
             text={
               combat.lampLost
                 ? `A lamp went out! (Lamps: ${state.lamps}/10)`
-                : "No lit lamps were lost."
+                : `No lamps lit: Took ${combat.fleeDamage || 1} damage!`
             }
             size={9}
             align="center"
