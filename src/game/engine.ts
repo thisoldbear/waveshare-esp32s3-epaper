@@ -174,19 +174,13 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
           return { needsFullRefresh: false };
         }
       } else if (button === "PWR") {
-        // [PWR] Flee -> Escape through thorns taking D3 damage and losing 1 lit lamp
-        const fleeDmg = rollD3();
-        state.hp = Math.max(0, state.hp - fleeDmg);
-        combat.fleeDamage = fleeDmg;
+        // [PWR] Flee -> Escape combat at the cost of 1 lit lamp going out
         combat.lampLost = state.lamps > 0;
         state.lamps = Math.max(0, state.lamps - 1);
-        if (state.hp <= 0) {
-          state.screen = "game_over";
-          state.deathCause = `Felled while escaping ${enemy.name}`;
-          return { needsFullRefresh: true };
-        }
         combat.phase = "fled";
-        combat.logMessage = `Fled through thorns! Took ${fleeDmg} dmg.`;
+        combat.logMessage = combat.lampLost
+          ? "Fled into the dark! A lamp went out."
+          : "Fled into the dark!";
         return { needsFullRefresh: false };
       }
     } else if (combat.phase === "enemy_turn_result") {
@@ -224,19 +218,13 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         }
         return { needsFullRefresh: false };
       } else if (button === "PWR") {
-        // [PWR] Flee -> Escape through thorns taking D3 damage and losing 1 lit lamp
-        const fleeDmg = rollD3();
-        state.hp = Math.max(0, state.hp - fleeDmg);
-        combat.fleeDamage = fleeDmg;
+        // [PWR] Flee -> Escape combat at the cost of 1 lit lamp going out
         combat.lampLost = state.lamps > 0;
         state.lamps = Math.max(0, state.lamps - 1);
-        if (state.hp <= 0) {
-          state.screen = "game_over";
-          state.deathCause = `Felled while escaping ${enemy.name}`;
-          return { needsFullRefresh: true };
-        }
         combat.phase = "fled";
-        combat.logMessage = `Fled through thorns! Took ${fleeDmg} dmg.`;
+        combat.logMessage = combat.lampLost
+          ? "Fled into the dark! A lamp went out."
+          : "Fled into the dark!";
         return { needsFullRefresh: false };
       }
     } else if (combat.phase === "player_strike_result") {
