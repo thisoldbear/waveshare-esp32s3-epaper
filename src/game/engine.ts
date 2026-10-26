@@ -178,10 +178,12 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
           return { needsFullRefresh: false };
         }
       } else if (button === "PWR") {
-        // [PWR] Flee -> Escape through thorns taking D3 damage
+        // [PWR] Flee -> Escape through thorns taking D3 damage and losing 1 lit lamp
         const fleeDmg = rollD3();
         state.hp = Math.max(0, state.hp - fleeDmg);
         combat.fleeDamage = fleeDmg;
+        combat.lampLost = state.lamps > 0;
+        state.lamps = Math.max(0, state.lamps - 1);
         if (state.hp <= 0) {
           state.screen = "game_over";
           state.deathCause = `Felled while escaping ${enemy.name}`;
@@ -226,10 +228,12 @@ export function handleInput(state: GameState, button: "BOOT" | "PWR"): InputResu
         }
         return { needsFullRefresh: false };
       } else if (button === "PWR") {
-        // [PWR] Flee
+        // [PWR] Flee -> Escape through thorns taking D3 damage and losing 1 lit lamp
         const fleeDmg = rollD3();
         state.hp = Math.max(0, state.hp - fleeDmg);
         combat.fleeDamage = fleeDmg;
+        combat.lampLost = state.lamps > 0;
+        state.lamps = Math.max(0, state.lamps - 1);
         if (state.hp <= 0) {
           state.screen = "game_over";
           state.deathCause = `Felled while escaping ${enemy.name}`;

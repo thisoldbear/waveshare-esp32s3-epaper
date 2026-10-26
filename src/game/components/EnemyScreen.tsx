@@ -158,19 +158,30 @@ export function EnemyScreen(props: { state: GameState }) {
 
       {phase === "fled" && (
         <box x={8} y={72} w={184} h={96}>
-          <text x={100} y={85} text="FLED COMBAT" size={12} align="center" />
+          <text x={100} y={80} text="FLED COMBAT" size={12} align="center" />
           <text
             x={100}
-            y={106}
+            y={98}
             text={`You broke away, taking ${combat.fleeDamage || 1} damage.`}
             size={9}
             align="center"
           />
-          <line x1={30} y1={124} x2={170} y2={124} />
           <text
             x={100}
-            y={136}
-            text={`Current HP: ${state.hp}/${state.maxHp}`}
+            y={112}
+            text={
+              combat.lampLost
+                ? `A lamp went out! (Lamps: ${state.lamps}/10)`
+                : "The darkness presses closer..."
+            }
+            size={9}
+            align="center"
+          />
+          <line x1={30} y1={128} x2={170} y2={128} />
+          <text
+            x={100}
+            y={138}
+            text={`HP: ${state.hp}/${state.maxHp} | Lamps: ${state.lamps}/10`}
             size={10}
             align="center"
           />
