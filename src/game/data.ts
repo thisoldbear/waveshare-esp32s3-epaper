@@ -30,7 +30,7 @@ export function createEnemy(roll: number): Enemy {
       type: "zombie",
       maxHp: 4,
       hp: 4,
-      toughness: 2,
+      toughness: 1,
       skill: 4, // Hits on 4+
       damage: 2,
       desc: "A decaying forest thrall."
@@ -41,7 +41,7 @@ export function createEnemy(roll: number): Enemy {
       type: "wolf",
       maxHp: 6,
       hp: 6,
-      toughness: 3,
+      toughness: 1,
       skill: 3, // Hits on 3+
       damage: 3,
       desc: "A savage nocturnal stalker."
@@ -52,7 +52,7 @@ export function createEnemy(roll: number): Enemy {
       type: "spider",
       maxHp: 8,
       hp: 8,
-      toughness: 4,
+      toughness: 2,
       skill: 3, // Hits on 3+
       damage: 4,
       desc: "A lethal webbed monstrosity."
