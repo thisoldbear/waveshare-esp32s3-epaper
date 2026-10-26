@@ -58,12 +58,8 @@ export function startNextEncounter(state: GameState): void {
       logMessage: `A ${enemy.name} emerges from the shadowed mist!`
     };
   } else {
-    // Chest Encounter: 1 or 2 items
-    const itemCount = rollD6() <= 3 ? 1 : 2;
-    const items: Item[] = [];
-    for (let i = 0; i < itemCount; i++) {
-      items.push(rollChestItem(rollD6()));
-    }
+    // Chest Encounter: 1 item
+    const items: Item[] = [rollChestItem(rollD6())];
     state.screen = "chest";
     state.combat = undefined;
     state.chest = {
