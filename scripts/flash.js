@@ -1,7 +1,7 @@
 const fs = require("fs");
 const espruino = require("espruino");
 
-const PORT = "52dc30f4a4c7e590ad4e7cebe78b1320";
+const PORT = process.env.ESPRUINO_PORT || "52dc30f4a4c7e590ad4e7cebe78b1320";
 const APP_PATH = "dist/app.js";
 
 async function main() {
