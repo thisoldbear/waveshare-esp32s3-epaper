@@ -15,20 +15,7 @@
 
 import { WaveshareEPaper154, EPD_WIDTH, EPD_HEIGHT } from "./epaper";
 import { config } from "./config";
-
-
-export interface PRItem {
-  number: number;
-  title: string;
-  state: "OPEN" | "MERGED" | "CLOSED";
-  mergedAt: string | null;
-  commentCount: number;
-  latestReview: string | null;
-  queuePosition: number | null;
-  queueState: string | null;
-  kickedOut: boolean;
-  hasNewComment: boolean;
-}
+import { parseGraphQLData, PRItem } from "./parser";
 
 let epd: WaveshareEPaper154 | null = null;
 let isRendering = false;
@@ -267,91 +254,18 @@ function render(fullRefresh: boolean): Promise<void> {
 function processGraphQLData(data: any): boolean {
   if (!data) return false;
 
-  const queueMap: Record<number, { position: number; state: string }> = {};
-  const currentQueueSet: Record<number, boolean> = {};
+  const result = parseGraphQLData(data, config.github.username, prList, previousQueuePrs);
 
-  // Parse Merge Queue entries
-  const queueEntries = data.repository?.mergeQueue?.entries?.nodes || [];
-  for (let i = 0; i < queueEntries.length; i++) {
-    const entry = queueEntries[i];
-    const prNum = entry.pullRequest?.number;
-    if (prNum) {
-      queueMap[prNum] = {
-        position: entry.position,
-        state: entry.state,
-      };
-      if (entry.pullRequest?.author?.login === config.github.username) {
-        currentQueueSet[prNum] = true;
-      }
-    }
+  for (let i = 0; i < result.alerts.length; i++) {
+    console.log(`[Alert] ${result.alerts[i]}`);
   }
 
-  // Parse User Pull Requests
-  const rawPRs = data.user?.pullRequests?.nodes || [];
-  const updatedList: PRItem[] = [];
-  let alertTriggered = false;
-
-  for (let i = 0; i < rawPRs.length; i++) {
-    const raw = rawPRs[i];
-    const num = raw.number;
-    const inQueue = queueMap[num];
-    const wasInQueue = !!previousQueuePrs[num];
-
-    let prevItem: PRItem | null = null;
-    for (let j = 0; j < prList.length; j++) {
-      if (prList[j].number === num) {
-        prevItem = prList[j];
-        break;
-      }
-    }
-    const prevCommentCount = prevItem ? prevItem.commentCount : raw.comments?.totalCount || 0;
-    const hasNewComment = raw.comments?.totalCount > prevCommentCount;
-
-    // Detect kicked out from queue: was previously in queue, now not, and NOT merged
-    const kickedOut = wasInQueue && !inQueue && raw.state !== "MERGED";
-
-    if (kickedOut) {
-      console.log(`[Alert] PR #${num} was KICKED OUT of the merge queue!`);
-      alertTriggered = true;
-    }
-
-    if (inQueue && !wasInQueue) {
-      console.log(`[Alert] PR #${num} ENTERED merge queue at pos #${inQueue.position}!`);
-      alertTriggered = true;
-    }
-
-    if (raw.state === "MERGED" && prevItem && prevItem.state !== "MERGED") {
-      console.log(`[Alert] PR #${num} has MERGED!`);
-      alertTriggered = true;
-    }
-
-    if (hasNewComment) {
-      console.log(`[Alert] PR #${num} received a NEW COMMENT!`);
-      alertTriggered = true;
-    }
-
-    const item: PRItem = {
-      number: num,
-      title: raw.title || `PR #${num}`,
-      state: raw.state,
-      mergedAt: raw.mergedAt,
-      commentCount: raw.comments?.totalCount || 0,
-      latestReview: raw.reviews?.nodes?.[0]?.state || null,
-      queuePosition: inQueue ? inQueue.position : null,
-      queueState: inQueue ? inQueue.state : null,
-      kickedOut,
-      hasNewComment,
-    };
-
-    updatedList.push(item);
-  }
-
-  previousQueuePrs = currentQueueSet;
-  prList = updatedList;
+  previousQueuePrs = result.currentQueuePrs;
+  prList = result.items;
   lastSyncTime = data.syncTime || formatTime(new Date());
   lastError = null;
 
-  if (alertTriggered) {
+  if (result.alertTriggered) {
     flashLed(4, 100);
   }
 
