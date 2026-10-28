@@ -104,6 +104,9 @@ async function main() {
           const b64Data = Buffer.from(JSON.stringify(githubData)).toString("base64");
           console.log("[Flash] Injecting live PR data and triggering initial refresh...");
           await exec(`globalThis.updatePRData(JSON.parse(atob("${b64Data}")))`);
+        } else {
+          console.log("[Flash] GitHub data unavailable; forcing clean initial refresh...");
+          await exec("render(true)");
         }
       }
     } catch (e) {
