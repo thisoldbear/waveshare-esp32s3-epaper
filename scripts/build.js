@@ -81,3 +81,14 @@ fs.writeFileSync(
 );
 
 console.log(`[Build] Success: Built "${projectName}" -> ${outFile}\n`);
+
+// 5. Trigger flash if requested
+const shouldFlash = process.argv.includes("--flash") || process.argv.includes("--upload");
+if (shouldFlash) {
+  console.log(`[Build] Flashing "${projectName}" to device...`);
+  try {
+    execSync("node scripts/flash.js", { stdio: "inherit" });
+  } catch (err) {
+    process.exit(err.status || 1);
+  }
+}

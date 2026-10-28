@@ -12,8 +12,8 @@
     "upload": "node scripts/flash.js",
     "upload:usb": "ESPRUINO_PORT=/dev/cu.usbmodem1101 node scripts/flash.js",
     "monitor": "node projects/github-notifications/scripts/monitor.js",
-    "dev": "node scripts/build.js && node scripts/flash.js",
-    "dev:github": "node scripts/build.js github-notifications && node scripts/flash.js"
+    "dev": "node scripts/build.js --flash",
+    "dev:github": "node scripts/build.js github-notifications --flash"
   },
   "devDependencies": {
     "@types/espruino": "^1.95.1",
