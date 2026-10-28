@@ -462,6 +462,15 @@ function connectWifi(): Promise<void> {
   });
 }
 
+function isWifiConfigured(): boolean {
+  return (
+    !!config.wifi.ssid &&
+    config.wifi.ssid !== "YOUR_HOTSPOT_SSID" &&
+    config.wifi.ssid !== "YOUR_WIFI_SSID" &&
+    config.wifi.ssid.trim().length > 0
+  );
+}
+
 function onButton(action: "NEXT_PR" | "SYNC"): void {
   if (isRendering) return;
   const now = Date.now();
@@ -477,12 +486,16 @@ function onButton(action: "NEXT_PR" | "SYNC"): void {
     }
   } else if (action === "SYNC") {
     console.log("[UI] Manual sync requested via BOOT button...");
-    if (wifiConnected) {
-      fetchGitHubData().catch(() => {});
+    if (isWifiConfigured()) {
+      if (wifiConnected) {
+        fetchGitHubData().catch(() => {});
+      } else {
+        connectWifi()
+          .then(() => fetchGitHubData())
+          .catch(() => {});
+      }
     } else {
-      connectWifi()
-        .then(() => fetchGitHubData())
-        .catch(() => {});
+      console.log("[UI] Standalone Wi-Fi not configured. Push updates via desktop monitor.");
     }
   }
 }
@@ -536,20 +549,27 @@ function main(): void {
       return render(true); // Initial full refresh
     })
     .then(() => {
+      if (!isWifiConfigured()) {
+        console.log("[App] Wi-Fi not configured; running in Desktop Companion mode.");
+        return;
+      }
       console.log("[App] Initializing Wi-Fi...");
-      return connectWifi();
-    })
-    .then(() => {
-      console.log("[App] Fetching initial GitHub status...");
-      return fetchGitHubData();
-    })
-    .then(() => {
-      startSyncLoop();
+      return connectWifi()
+        .then(() => {
+          console.log("[App] Fetching initial GitHub status...");
+          return fetchGitHubData();
+        })
+        .then(() => {
+          startSyncLoop();
+        })
+        .catch((err) => {
+          console.log("[App] Boot sequence warning/error:", err);
+          // Even if Wi-Fi initial connect fails, start the periodic retry loop
+          startSyncLoop();
+        });
     })
     .catch((err) => {
-      console.log("[App] Boot sequence warning/error:", err);
-      // Even if Wi-Fi initial connect fails, start the periodic retry loop
-      startSyncLoop();
+      console.log("[App] Initialization error:", err);
     });
 }
 
