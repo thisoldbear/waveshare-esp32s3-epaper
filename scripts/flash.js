@@ -1,64 +1,9 @@
 const fs = require("fs");
 const espruino = require("espruino");
-const { execSync } = require("child_process");
+const { queryGitHub } = require("./github");
 
 const PORT = process.env.ESPRUINO_PORT || "52dc30f4a4c7e590ad4e7cebe78b1320";
 const APP_PATH = "dist/app.js";
-
-function queryGitHub() {
-  const query = `
-    query {
-      repository(owner: "ImmersiveLabsUkOrg", name: "mittens") {
-        mergeQueue(branch: "main") {
-          entries(first: 5) {
-            nodes {
-              position
-              state
-              pullRequest {
-                number
-                author {
-                  login
-                }
-              }
-            }
-          }
-        }
-      }
-      user(login: "thisoldbear") {
-        pullRequests(first: 5, states: [OPEN, MERGED], orderBy: {field: UPDATED_AT, direction: DESC}) {
-          nodes {
-            number
-            title
-            state
-            mergedAt
-            comments {
-              totalCount
-            }
-            reviews(last: 1) {
-              nodes {
-                state
-                author {
-                  login
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  try {
-    const output = execSync(`gh api graphql -f query='${query.replace(/\n\s*/g, " ")}'`, {
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    return JSON.parse(output).data;
-  } catch (err) {
-    console.warn("[Flash] Warning: Could not fetch initial GitHub data via gh CLI:", err.message);
-    return null;
-  }
-}
 
 async function main() {
   if (!fs.existsSync(APP_PATH)) {

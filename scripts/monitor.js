@@ -6,69 +6,14 @@
  * Polls GitHub via the `gh` CLI and pushes updates to the device over BLE or USB Serial.
  */
 
-const { execSync } = require("child_process");
 const espruino = require("espruino");
+const { queryGitHub } = require("./github");
 
 const PORT = process.env.ESPRUINO_PORT || "52dc30f4a4c7e590ad4e7cebe78b1320";
 const REPO_OWNER = process.env.GITHUB_OWNER || "ImmersiveLabsUkOrg";
 const REPO_NAME = process.env.GITHUB_REPO || "mittens";
 const USERNAME = process.env.GITHUB_USER || "thisoldbear";
 const POLL_INTERVAL_SEC = 30;
-
-function queryGitHub() {
-  const query = `
-    query {
-      repository(owner: "${REPO_OWNER}", name: "${REPO_NAME}") {
-        mergeQueue(branch: "main") {
-          entries(first: 5) {
-            nodes {
-              position
-              state
-              pullRequest {
-                number
-                author {
-                  login
-                }
-              }
-            }
-          }
-        }
-      }
-      user(login: "${USERNAME}") {
-        pullRequests(first: 3, states: [OPEN, MERGED], orderBy: {field: UPDATED_AT, direction: DESC}) {
-          nodes {
-            number
-            title
-            state
-            mergedAt
-            comments {
-              totalCount
-            }
-            reviews(last: 1) {
-              nodes {
-                state
-                author {
-                  login
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  try {
-    const output = execSync(`gh api graphql -f query='${query.replace(/\n\s*/g, " ")}'`, {
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    return JSON.parse(output).data;
-  } catch (err) {
-    console.error("[Monitor] Failed to query GitHub via gh CLI:", err.message);
-    return null;
-  }
-}
 
 async function main() {
   console.log("=== GitHub PR & Merge Queue Desktop Monitor ===");
