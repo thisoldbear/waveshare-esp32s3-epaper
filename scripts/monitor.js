@@ -133,16 +133,19 @@ async function main() {
     }
   }
 
-  // Initial push
-  await pollAndPush();
+  // Sequential polling loop (prevents concurrent UART writes)
+  async function pollLoop() {
+    await pollAndPush();
 
-  if (process.argv.includes("--once")) {
-    console.log("[Monitor] Single update complete. Exiting.");
-    process.exit(0);
+    if (process.argv.includes("--once")) {
+      console.log("[Monitor] Single update complete. Exiting.");
+      process.exit(0);
+    }
+
+    setTimeout(pollLoop, POLL_INTERVAL_SEC * 1000);
   }
 
-  // Periodic loop
-  setInterval(pollAndPush, POLL_INTERVAL_SEC * 1000);
+  await pollLoop();
 }
 
 main().catch((err) => {
