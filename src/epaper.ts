@@ -290,14 +290,4 @@ export class WaveshareEPaper154 {
       });
     });
   }
-
-  public sleep(): Promise<void> {
-    console.log("[EPD] Putting display controller into deep sleep...");
-    this.sendCommand(0x10); // Deep sleep mode
-    this.sendData(0x01);
-    return delayMs(100).then(() => {
-      digitalWrite(this.pwrPin, 1); // 1 = POWER OFF!
-      console.log("[EPD] Display powered down.");
-    });
-  }
 }
