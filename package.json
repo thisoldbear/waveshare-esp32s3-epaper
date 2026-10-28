@@ -4,15 +4,16 @@
   "description": "Espruino TypeScript application for Waveshare ESP32-S3 e-Paper 1.54\"",
   "main": "dist/app.js",
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/index.ts --bundle --target=es2018 --format=iife --minify --external:http --external:Wifi --external:Storage --outfile=dist/app.js",
-    "test": "node --test test/*.test.ts",
+    "build": "node scripts/build.js",
+    "test": "node --test 'projects/**/test/*.test.ts'",
     "typecheck": "tsc --noEmit",
     "backup": "uvx esptool --chip esp32s3 --port /dev/cu.usbmodem1101 read_flash 0x0 0x800000 firmware/factory_backup.bin",
     "firmware:flash": "uvx esptool --chip esp32s3 --port /dev/cu.usbmodem1101 write_flash --flash_mode dio --flash_size detect --flash_freq 80m 0x0 firmware/bootloader.bin 0x8000 firmware/partition-table.bin 0x10000 firmware/espruino-esp32s3.bin",
     "upload": "node scripts/flash.js",
     "upload:usb": "ESPRUINO_PORT=/dev/cu.usbmodem1101 node scripts/flash.js",
-    "monitor": "node scripts/monitor.js",
-    "dev": "npm run build && npm run upload"
+    "monitor": "node projects/github-notifications/scripts/monitor.js",
+    "dev": "node scripts/build.js && node scripts/flash.js",
+    "dev:github": "node scripts/build.js github-notifications && node scripts/flash.js"
   },
   "devDependencies": {
     "@types/espruino": "^1.95.1",

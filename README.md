@@ -1,21 +1,10 @@
-# Waveshare ESP32-S3 e-Paper 1.54" Espruino TypeScript Starter
+# Waveshare ESP32-S3 e-Paper 1.54" Platform
 
-A minimal TypeScript starter for [Espruino](https://www.espruino.com) on the **Waveshare ESP32-S3 e-Paper 1.54" (200×200)** development board.
+A modular TypeScript platform and hardware driver for [Espruino](https://www.espruino.com) on the **Waveshare ESP32-S3 e-Paper 1.54" (200×200)** development board.
 
-## What's Included
-
-- **[`src/epaper.ts`](src/epaper.ts)** — SSD1681 200×200 monochrome e-paper driver over software SPI (`D12`/`D13`), supporting:
-  - `epd.init()` — Powers on display rail (`D6 = 0`), resets controller, and loads waveform LUT.
-  - `epd.display(buffer)` — Clean full refresh (writes both `0x24` and `0x26` RAM planes for zero ghosting).
-  - `epd.displayPartial(buffer)` — Fast differential partial refresh (~300ms) with automatic shadow RAM sync.
-  - `epd.sleep()` — Puts controller into deep sleep and cuts display power (`D6 = 1`).
-- **[`src/index.ts`](src/index.ts)** — Minimal starter app demonstrating:
-  - Persistent 5KB 1-bit `Graphics.createArrayBuffer(200, 200, 1, { msb: true })` frame buffer.
-  - `BOOT` (`D0`) and `PWR` (`D18`) hardware button watches with debounce and busy-state guards.
-  - Onboard `D3` status LED indicator while the display is refreshing.
-  - `global.onInit` registration so the board boots straight into your code from flash (`.bootcde`).
-- **[`scripts/flash.js`](scripts/flash.js)** — Reliable BLE uploader that writes `dist/app.js` in 512-byte base64 chunks to `.bootcde`, verifies the stored size, and reloads the board.
-- **[`src/types.d.ts`](src/types.d.ts)** — TypeScript definitions for ESP32-S3 pins (`D0`–`D18`), GPIO, `setWatch`, and `Graphics`.
+The repository is organized into a **neutral core** and independent **project folders**:
+- **`src/`**: Shared hardware abstraction (`epaper.ts`), Espruino type definitions (`types.d.ts`), and a neutral baseline hardware starter app (`src/index.ts`).
+- **`projects/`**: Self-contained applications (e.g. `projects/github-notifications/`), each with their own firmware, tests, and companion scripts.
 
 ---
 
@@ -36,60 +25,62 @@ A minimal TypeScript starter for [Espruino](https://www.espruino.com) on the **W
 
 ---
 
-## Getting Started on a New Project
+## Projects
 
-### 1. Branch from `main` & Install Dependencies
+### 1. Neutral Starter (`starter`)
+A simple counter and button test app that validates hardware buttons and e-paper display refresh.
 ```bash
-git checkout main
-git checkout -b my-new-project
-npm install
-```
-
-### 2. Edit Your Application (`src/index.ts`)
-Draw onto the `Graphics` buffer `g` (`0` = black, `1` = white) and call `epd.display(g.buffer)` for a full refresh or `epd.displayPartial(g.buffer)` for a fast partial update.
-
-### 3. Build & Upload Over BLE
-```bash
+# Build & flash default starter
+npm run build
+npm run upload
+# Or build + flash in one step:
 npm run dev
 ```
-This runs `npm run build` (TypeScript typecheck + `esbuild` bundle into `dist/app.js`) followed by `npm run upload` (`scripts/flash.js`).
 
-To target a different BLE address or serial port:
+### 2. GitHub PR & Merge Queue Monitor (`github-notifications`)
+Located in [`projects/github-notifications/`](projects/github-notifications/). Monitors pull requests, review states, new comments, merges, and merge queue entry/kick-out events for user `thisoldbear` on repo `ImmersiveLabsUkOrg/mittens`.
+
 ```bash
-ESPRUINO_PORT="your-ble-uuid" npm run upload
-# Or upload over USB serial:
-npm run upload:usb
+# Build & flash to board
+npm run dev:github
+
+# Run the Mac companion monitor daemon (polls via gh CLI over BLE/Serial)
+npm run monitor
+
+# Run unit tests
+npm test
 ```
+See [`projects/github-notifications/README.md`](projects/github-notifications/README.md) for full documentation.
 
 ---
 
-## GitHub PR & Merge Queue Monitor
+## Creating a New Project
 
-This project monitors pull requests and merge queue activity for `ImmersiveLabsUkOrg/mittens`:
-- **Merge Queue status:** Position in queue and check status (`AWAITING_CHECKS`, `QUEUED`).
-- **Kick-outs:** Alerts when a PR was removed/kicked out of the merge queue (due to failed CI or merge conflicts).
-- **Merges:** Displays `* MERGED *` upon successful merge.
-- **Comments & Reviews:** Tracks new comments and latest review state (`APPROVED`, `COMMENTED`, etc.).
+To add a new project without modifying the root starter:
 
-### Option 1: Desktop Companion (Zero-config, Uses your Mac's `gh` credentials)
+1. Create a new folder: `mkdir -p projects/my-app/src`
+2. Create `projects/my-app/src/index.ts` importing the shared driver:
+   ```ts
+   import { WaveshareEPaper154, EPD_WIDTH, EPD_HEIGHT } from "../../../src/epaper";
+   ```
+3. Build and flash:
+   ```bash
+   node scripts/build.js my-app
+   npm run upload
+   ```
 
-Run the desktop companion script in a terminal on your Mac:
+---
 
+## Flashing & Hardware Targets
+
+To specify a custom BLE UUID or USB serial port:
 ```bash
-npm run monitor
+# Target custom BLE device
+ESPRUINO_PORT="52dc30f4a4c7e590ad4e7cebe78b1320" npm run upload
+
+# Flash over USB serial directly
+npm run upload:usb
 ```
-
-It queries GitHub using your existing Mac `gh` CLI session and pushes real-time updates directly to the Waveshare display over BLE or USB.
-
-### Option 2: Standalone Wi-Fi (Untethered Hotspot)
-
-For untethered operation directly on your phone's hotspot or Wi-Fi network, see **[`STANDALONE_WIFI_SETUP.md`](STANDALONE_WIFI_SETUP.md)**.
-
-### Hardware Controls
-
-- **`BOOT` Button (`D0`):** Force immediate sync with GitHub.
-- **`PWR` Button (`D18`):** Cycle through your active / recent PRs.
-- **Onboard LED (`D3`):** Lit during refresh; flashes on alert events (merge / kick-out / comments).
 
 ---
 
@@ -101,7 +92,7 @@ If preparing a brand-new Waveshare ESP32-S3 e-Paper 1.54" board:
 # 1. (Optional) Backup factory flash over USB
 npm run backup
 
-# 2. Download Espruino ESP32-S3 firmware binaries
+# 2. Download official Espruino 2v29 binaries
 ./firmware/download_firmware.sh
 
 # 3. Flash Espruino firmware to the ESP32-S3
