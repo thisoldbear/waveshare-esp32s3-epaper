@@ -20,12 +20,9 @@ import { parseGraphQLData, PRItem } from "./parser";
 let epd: WaveshareEPaper154 | null = null;
 let isRendering = false;
 let lastPressTime = 0;
-let refreshCounter = 0;
 
 // App State
 let wifiConnected = false;
-let wifiStatus = "INIT";
-let lastSyncTime = "--:--";
 let lastError: string | null = null;
 let prList: PRItem[] = [];
 let selectedIndex = 0;
@@ -50,14 +47,6 @@ function resetAutoCycle(): void {
 
 // Persistent 200x200 1-bit monochrome graphics buffer
 const g = Graphics.createArrayBuffer(EPD_WIDTH, EPD_HEIGHT, 1, { msb: true });
-
-function formatTime(date: Date): string {
-  const h = date.getHours();
-  const m = date.getMinutes();
-  const hh = h < 10 ? "0" + h : "" + h;
-  const mm = m < 10 ? "0" + m : "" + m;
-  return hh + ":" + mm;
-}
 
 function wrapText(text: string, maxLen: number, maxLines: number): string[] {
   const words = text.split(" ");
@@ -262,7 +251,6 @@ function processGraphQLData(data: any): boolean {
 
   previousQueuePrs = result.currentQueuePrs;
   prList = result.items;
-  lastSyncTime = data.syncTime || formatTime(new Date());
   lastError = null;
 
   if (result.alertTriggered) {
@@ -353,21 +341,18 @@ function fetchGitHubData(): Promise<void> {
 function connectWifi(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const wifi = require("Wifi");
-    wifiStatus = "Connecting...";
     console.log(`[WiFi] Connecting to "${config.wifi.ssid}"...`);
     render(false);
 
     wifi.connect(config.wifi.ssid, { password: config.wifi.password }, (err) => {
       if (err) {
         wifiConnected = false;
-        wifiStatus = "Fail";
         lastError = "WiFi connect fail";
         console.log("[WiFi] Connection failed:", err);
         render(false);
         reject(new Error(String(err)));
       } else {
         wifiConnected = true;
-        wifiStatus = "OK";
         console.log("[WiFi] Connected! IP:", wifi.getIP().ip);
         render(false);
         resolve();
