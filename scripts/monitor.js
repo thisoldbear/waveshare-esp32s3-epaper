@@ -91,9 +91,15 @@ async function main() {
   console.log("[Monitor] Connected to device!");
 
   function exec(cmd) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       Espruino.Core.Utils.executeExpression(cmd, (res) => {
-        resolve(res);
+        if (res === undefined) {
+          reject(new Error("Device did not respond (timeout or serial bus busy)"));
+        } else if (typeof res === "string" && (res.includes("Error") || res.includes("MEMORY"))) {
+          reject(new Error(`Device interpreter error: ${res}`));
+        } else {
+          resolve(res);
+        }
       });
     });
   }
