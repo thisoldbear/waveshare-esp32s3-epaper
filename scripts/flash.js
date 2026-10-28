@@ -1,17 +1,26 @@
 const fs = require("fs");
+const path = require("path");
 const espruino = require("espruino");
-const { queryGitHub } = require("./github");
 
 const PORT = process.env.ESPRUINO_PORT || "52dc30f4a4c7e590ad4e7cebe78b1320";
 const APP_PATH = "dist/app.js";
+const META_PATH = "dist/project.json";
 
 async function main() {
   if (!fs.existsSync(APP_PATH)) {
-    console.error(`Error: ${APP_PATH} not found!`);
+    console.error(`Error: ${APP_PATH} not found! Run "npm run build" first.`);
     process.exit(1);
   }
 
+  let projectMeta = { project: "starter" };
+  if (fs.existsSync(META_PATH)) {
+    try {
+      projectMeta = JSON.parse(fs.readFileSync(META_PATH, "utf8"));
+    } catch (e) {}
+  }
+
   const appData = fs.readFileSync(APP_PATH);
+  console.log(`[Flash] Active project: "${projectMeta.project}"`);
   console.log(`[Flash] Loaded ${APP_PATH} (${appData.length} bytes).`);
 
   await new Promise((resolve) => espruino.init(resolve));
@@ -83,16 +92,26 @@ async function main() {
   console.log("[Flash] Verification passed! Executing fresh .bootcde on device...");
   await exec("eval(require('Storage').read('.bootcde'))");
 
-  // 5. Query GitHub and push fresh data with full hardware refresh wipe
-  console.log("[Flash] Fetching live GitHub status to immediately populate display...");
-  const githubData = queryGitHub();
-  if (githubData) {
-    const b64Data = Buffer.from(JSON.stringify(githubData)).toString("base64");
-    console.log("[Flash] Injecting live PR data and triggering CLEAN FULL REFRESH...");
-    await exec(`globalThis.updatePRData(JSON.parse(atob("${b64Data}")))`);
-  } else {
-    console.log("[Flash] Forcing clean full refresh...");
-    await exec("render(true)");
+  // 5. Optional project-specific post-flash hook
+  if (projectMeta.project === "github-notifications") {
+    try {
+      const githubHelper = path.resolve("projects/github-notifications/scripts/github.js");
+      if (fs.existsSync(githubHelper)) {
+        const { queryGitHub } = require(githubHelper);
+        console.log("[Flash] Fetching live GitHub status to immediately populate display...");
+        const githubData = queryGitHub();
+        if (githubData) {
+          const b64Data = Buffer.from(JSON.stringify(githubData)).toString("base64");
+          console.log("[Flash] Injecting live PR data and triggering initial refresh...");
+          await exec(`globalThis.updatePRData(JSON.parse(atob("${b64Data}")))`);
+        } else {
+          console.log("[Flash] GitHub data unavailable; forcing clean initial refresh...");
+          await exec("render(true)");
+        }
+      }
+    } catch (e) {
+      console.warn("[Flash] Post-flash GitHub hook skipped:", e.message);
+    }
   }
 
   // Wait for display busy cycle to complete
@@ -100,7 +119,7 @@ async function main() {
   await new Promise((r) => setTimeout(r, 4000));
 
   Espruino.Core.Serial.close();
-  console.log("\n[Flash] SUCCESS: Device is fully updated and refreshed with clean header!");
+  console.log(`\n[Flash] SUCCESS: Device is running "${projectMeta.project}"!`);
   process.exit(0);
 }
 

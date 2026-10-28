@@ -22,6 +22,8 @@ pnpm-debug.log*
 .env
 .env*.local
 src/config.ts
+projects/*/src/config.ts
+**/config.ts
 
 # Editor and OS
 .DS_Store
