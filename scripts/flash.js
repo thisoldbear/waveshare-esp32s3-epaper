@@ -37,14 +37,6 @@ async function main() {
     });
   }
 
-  function sendRaw(str) {
-    return new Promise((resolve) => {
-      Espruino.Core.Serial.write(str, false, () => {
-        setTimeout(resolve, 200);
-      });
-    });
-  }
-
   // 1. Force interrupt any running code
   console.log("[Flash] Stopping running code and freeing memory...");
   await exec("eval('try{clearInterval();clearWatch();epd=null;g=null;prList=null;}catch(e){}true')");
