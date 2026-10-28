@@ -63,6 +63,36 @@ npm run upload:usb
 
 ---
 
+## GitHub PR & Merge Queue Monitor
+
+This project monitors pull requests and merge queue activity for `ImmersiveLabsUkOrg/mittens`:
+- **Merge Queue status:** Position in queue and check status (`AWAITING_CHECKS`, `QUEUED`).
+- **Kick-outs:** Alerts when a PR was removed/kicked out of the merge queue (due to failed CI or merge conflicts).
+- **Merges:** Displays `* MERGED *` upon successful merge.
+- **Comments & Reviews:** Tracks new comments and latest review state (`APPROVED`, `COMMENTED`, etc.).
+
+### Option 1: Desktop Companion (Zero-config, Uses your Mac's `gh` credentials)
+
+Run the desktop companion script in a terminal on your Mac:
+
+```bash
+npm run monitor
+```
+
+It queries GitHub using your existing Mac `gh` CLI session and pushes real-time updates directly to the Waveshare display over BLE or USB.
+
+### Option 2: Standalone Wi-Fi (Untethered Hotspot)
+
+For untethered operation directly on your phone's hotspot or Wi-Fi network, see **[`STANDALONE_WIFI_SETUP.md`](STANDALONE_WIFI_SETUP.md)**.
+
+### Hardware Controls
+
+- **`BOOT` Button (`D0`):** Force immediate sync with GitHub.
+- **`PWR` Button (`D18`):** Cycle through your active / recent PRs.
+- **Onboard LED (`D3`):** Lit during refresh; flashes on alert events (merge / kick-out / comments).
+
+---
+
 ## First-Time Board Setup (Flashing Espruino Firmware)
 
 If preparing a brand-new Waveshare ESP32-S3 e-Paper 1.54" board:

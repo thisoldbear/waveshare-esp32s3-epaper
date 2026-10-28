@@ -64,3 +64,62 @@ declare namespace Graphics {
     options?: GraphicsBufferOptions
   ): Graphics;
 }
+
+// Networking & Espruino core modules
+interface WifiConnectOptions {
+  password?: string;
+  dns?: string;
+}
+
+interface WifiIPInfo {
+  ip: string;
+  netmask: string;
+  gw: string;
+  mac: string;
+}
+
+interface WifiModule {
+  connect(
+    ssid: string,
+    options: WifiConnectOptions,
+    callback: (err?: string | Error) => void
+  ): void;
+  disconnect(callback?: () => void): void;
+  getIP(): WifiIPInfo;
+  getStatus(callback: (status: any) => void): void;
+}
+
+interface HttpResponse {
+  statusCode?: number;
+  headers?: Record<string, string>;
+  on(event: "data", callback: (chunk: string) => void): void;
+  on(event: "close", callback: () => void): void;
+}
+
+interface HttpRequestOptions {
+  host: string;
+  port?: number;
+  path: string;
+  method?: string;
+  protocol?: string;
+  headers?: Record<string, string | number>;
+}
+
+interface ClientRequest {
+  write(data: string): void;
+  end(): void;
+  on(event: "error", callback: (err: Error) => void): void;
+}
+
+interface HttpModule {
+  request(
+    options: HttpRequestOptions,
+    callback: (res: HttpResponse) => void
+  ): ClientRequest;
+}
+
+declare function require(moduleName: "Wifi"): WifiModule;
+declare function require(moduleName: "http"): HttpModule;
+declare function require(moduleName: "Storage"): any;
+declare function require(moduleName: string): any;
+

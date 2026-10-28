@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES5",
     "module": "CommonJS",
-    "lib": ["ES5", "ES2015.Promise", "DOM"],
+    "lib": ["ES2018", "DOM"],
     "downlevelIteration": true,
     "strict": true,
     "noImplicitAny": true,
