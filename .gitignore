@@ -21,6 +21,7 @@ pnpm-debug.log*
 # Environment and secrets
 .env
 .env*.local
+src/config.ts
 
 # Editor and OS
 .DS_Store
