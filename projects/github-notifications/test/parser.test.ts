@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseGraphQLData } from "../src/parser.ts";
+import type { PRItem, GitHubGraphQLData } from "../src/parser.ts";
 
 test("parseGraphQLData - extracts PR details correctly", () => {
   const payload = {
@@ -98,7 +99,7 @@ test("parseGraphQLData - detects kicked out from queue", () => {
   };
 
   const prevQueue = { 14230: true };
-  const prevItems = [
+  const prevItems: PRItem[] = [
     {
       number: 14230,
       title: "fix: editor bug",
@@ -113,7 +114,7 @@ test("parseGraphQLData - detects kicked out from queue", () => {
     },
   ];
 
-  const result = parseGraphQLData(payload, "thisoldbear", prevItems as any, prevQueue);
+  const result = parseGraphQLData(payload, "thisoldbear", prevItems, prevQueue);
   assert.equal(result.alertTriggered, true);
   assert.equal(result.items[0].kickedOut, true);
   assert.match(result.alerts[0], /KICKED OUT/);
@@ -140,7 +141,7 @@ test("parseGraphQLData - detects successful merge", () => {
     },
   };
 
-  const prevItems = [
+  const prevItems: PRItem[] = [
     {
       number: 14230,
       title: "fix: editor bug",
@@ -155,7 +156,7 @@ test("parseGraphQLData - detects successful merge", () => {
     },
   ];
 
-  const result = parseGraphQLData(payload, "thisoldbear", prevItems as any, { 14230: true });
+  const result = parseGraphQLData(payload, "thisoldbear", prevItems, { 14230: true });
   assert.equal(result.alertTriggered, true);
   assert.equal(result.items[0].state, "MERGED");
   assert.equal(result.items[0].kickedOut, false); // Merged PRs are not kicked out
@@ -163,7 +164,7 @@ test("parseGraphQLData - detects successful merge", () => {
 });
 
 test("parseGraphQLData - detects new comments", () => {
-  const payload = {
+  const payload: GitHubGraphQLData = {
     repository: { mergeQueue: { entries: { nodes: [] } } },
     user: {
       pullRequests: {
@@ -180,7 +181,7 @@ test("parseGraphQLData - detects new comments", () => {
     },
   };
 
-  const prevItems = [
+  const prevItems: PRItem[] = [
     {
       number: 14230,
       title: "fix: editor bug",
@@ -195,7 +196,7 @@ test("parseGraphQLData - detects new comments", () => {
     },
   ];
 
-  const result = parseGraphQLData(payload, "thisoldbear", prevItems as any, {});
+  const result = parseGraphQLData(payload, "thisoldbear", prevItems, {});
   assert.equal(result.alertTriggered, true);
   assert.equal(result.items[0].hasNewComment, true);
   assert.equal(result.items[0].commentCount, 5);

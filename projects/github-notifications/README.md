@@ -6,18 +6,19 @@ Tracks pull requests, review states, new comments, successful merges (`state: ME
 
 ---
 
-## Operational Modes
+## Quick Start: Updating the Device
 
-### 1. Desktop Companion Mode (Recommended)
-Streams live updates from your Mac to the board over Bluetooth LE or USB Serial using your local `gh` CLI credentials (no tokens or passwords committed or transferred).
+With your device plugged into your Mac:
 
 ```bash
 # 1. Build and flash the project to your board
 npm run dev:github
 
-# 2. Run the companion daemon in your terminal
+# 2. Run the companion daemon in your terminal (streams live PR data)
 npm run monitor
 ```
+
+> **Note:** The ESP32-S3 Espruino firmware is powered over USB and accepts JavaScript updates via Bluetooth LE (`Espruino 6f58`). `npm run dev:github` automatically bundles the TypeScript code and flashes the board wirelessly. To override the target address, pass `ESPRUINO_PORT="<UUID or port>"`.
 
 The monitor polls GitHub GraphQL every 30 seconds and pushes fresh PR data to the board. The board auto-cycles through active PRs every 15 seconds with quiet, partial refreshes.
 

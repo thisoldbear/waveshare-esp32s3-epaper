@@ -15,7 +15,7 @@
 
 import { WaveshareEPaper154, EPD_WIDTH, EPD_HEIGHT } from "../../../src/epaper";
 import { config } from "./config";
-import { parseGraphQLData, PRItem } from "./parser";
+import { parseGraphQLData, PRItem, GitHubGraphQLData } from "./parser";
 
 let epd: WaveshareEPaper154 | null = null;
 let isRendering = false;
@@ -28,7 +28,7 @@ let prList: PRItem[] = [];
 let selectedIndex = 0;
 let previousQueuePrs: Record<number, boolean> = {};
 let isPolling = false;
-let autoCycleTimer: any = null;
+let autoCycleTimer: ReturnType<typeof setInterval> | null = null;
 const AUTO_CYCLE_INTERVAL_MS = 15000; // Auto-cycle to next PR every 15 seconds
 
 function resetAutoCycle(): void {
@@ -240,7 +240,7 @@ function render(fullRefresh: boolean): Promise<void> {
     });
 }
 
-function processGraphQLData(data: any): boolean {
+function processGraphQLData(data: GitHubGraphQLData | null | undefined): boolean {
   if (!data) return false;
 
   const result = parseGraphQLData(data, config.github.username, prList, previousQueuePrs);
@@ -315,11 +315,11 @@ function fetchGitHubData(): Promise<void> {
           processGraphQLData(json.data);
           render(false);
           resolve();
-        } catch (e: any) {
+        } catch (e: unknown) {
           lastError = "Parse err";
           console.log("[GitHub] JSON parse error:", e);
           render(false);
-          reject(e);
+          reject(e instanceof Error ? e : new Error(String(e)));
         }
       });
     });
@@ -475,8 +475,8 @@ function main(): void {
 let hasDoneInitialRender = false;
 
 // Global hook for REPL/USB update injection
-(globalThis as any).updatePRData = function (rawJson: any) {
-  processGraphQLData(rawJson);
+const updateFn = function (rawJson: unknown): void {
+  processGraphQLData(rawJson as GitHubGraphQLData);
   resetAutoCycle();
   if (!hasDoneInitialRender) {
     hasDoneInitialRender = true;
@@ -487,12 +487,14 @@ let hasDoneInitialRender = false;
 };
 
 if (typeof global !== "undefined") {
+  global.updatePRData = updateFn;
   global.onInit = main;
   global.main = main;
 }
 if (typeof globalThis !== "undefined") {
-  (globalThis as any).onInit = main;
-  (globalThis as any).main = main;
+  globalThis.updatePRData = updateFn;
+  globalThis.onInit = main;
+  globalThis.main = main;
 }
 
 main();

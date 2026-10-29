@@ -68,7 +68,7 @@ async function main() {
     });
 
     const b64 = Buffer.from(JSON.stringify(data)).toString("base64");
-    const cmd = `globalThis.updatePRData(JSON.parse(atob("${b64}")))`;
+    const cmd = `global.updatePRData(JSON.parse(atob("${b64}")))`;
 
     try {
       await exec(cmd);

@@ -166,8 +166,8 @@ if (typeof global !== "undefined") {
   global.main = main;
 }
 if (typeof globalThis !== "undefined") {
-  (globalThis as any).onInit = main;
-  (globalThis as any).main = main;
+  globalThis.onInit = main;
+  globalThis.main = main;
 }
 
 // Also run immediately upon upload

@@ -41,10 +41,10 @@ npm run dev
 Located in [`projects/github-notifications/`](projects/github-notifications/). Monitors pull requests, review states, new comments, merges, and merge queue entry/kick-out events for user `thisoldbear` on repo `ImmersiveLabsUkOrg/mittens`.
 
 ```bash
-# Build & flash to board
+# 1. Build and update the plugged-in board in one step:
 npm run dev:github
 
-# Run the Mac companion monitor daemon (polls via gh CLI over BLE/Serial)
+# 2. Run the Mac companion monitor daemon (polls GitHub and pushes live updates)
 npm run monitor
 
 # Run unit tests

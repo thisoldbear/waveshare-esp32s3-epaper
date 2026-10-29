@@ -11,6 +11,56 @@ export interface PRItem {
   hasNewComment: boolean;
 }
 
+export interface MergeQueueAuthor {
+  login: string;
+}
+
+export interface MergeQueuePullRequest {
+  number: number;
+  author?: MergeQueueAuthor | null;
+}
+
+export interface MergeQueueEntryNode {
+  position: number;
+  state: string;
+  pullRequest?: MergeQueuePullRequest | null;
+}
+
+export interface ReviewNode {
+  state: string;
+  author?: {
+    login: string;
+  } | null;
+}
+
+export interface PullRequestNode {
+  number: number;
+  title?: string;
+  state: "OPEN" | "MERGED" | "CLOSED";
+  mergedAt?: string | null;
+  comments?: {
+    totalCount: number;
+  } | null;
+  reviews?: {
+    nodes?: ReviewNode[];
+  } | null;
+}
+
+export interface GitHubGraphQLData {
+  repository?: {
+    mergeQueue?: {
+      entries?: {
+        nodes?: MergeQueueEntryNode[];
+      } | null;
+    } | null;
+  } | null;
+  user?: {
+    pullRequests?: {
+      nodes?: PullRequestNode[];
+    } | null;
+  } | null;
+}
+
 export interface ParseResult {
   items: PRItem[];
   currentQueuePrs: Record<number, boolean>;
@@ -19,11 +69,14 @@ export interface ParseResult {
 }
 
 export function parseGraphQLData(
-  data: any,
+  data: GitHubGraphQLData | null | undefined,
   username: string,
-  previousList: PRItem[] = [],
-  previousQueuePrs: Record<number, boolean> = {}
+  previousList?: PRItem[],
+  previousQueuePrs?: Record<number, boolean>
 ): ParseResult {
+  const prevList = previousList || [];
+  const prevQueue = previousQueuePrs || {};
+
   if (!data) {
     return {
       items: [],
@@ -62,12 +115,12 @@ export function parseGraphQLData(
     const raw = rawPRs[i];
     const num = raw.number;
     const inQueue = queueMap[num];
-    const wasInQueue = !!previousQueuePrs[num];
+    const wasInQueue = !!prevQueue[num];
 
     let prevItem: PRItem | null = null;
-    for (let j = 0; j < previousList.length; j++) {
-      if (previousList[j].number === num) {
-        prevItem = previousList[j];
+    for (let j = 0; j < prevList.length; j++) {
+      if (prevList[j].number === num) {
+        prevItem = prevList[j];
         break;
       }
     }
@@ -101,7 +154,7 @@ export function parseGraphQLData(
       number: num,
       title: raw.title || `PR #${num}`,
       state: raw.state,
-      mergedAt: raw.mergedAt,
+      mergedAt: raw.mergedAt ?? null,
       commentCount: raw.comments?.totalCount || 0,
       latestReview: raw.reviews?.nodes?.[0]?.state || null,
       queuePosition: inQueue ? inQueue.position : null,

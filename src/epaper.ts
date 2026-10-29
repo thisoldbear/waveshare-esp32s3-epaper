@@ -66,7 +66,7 @@ export class WaveshareEPaper154 {
   private csPin = D11;
   private sckPin = D12;
   private mosiPin = D13;
-  private spi = new (globalThis as any).SPI();
+  private spi: SPI = new SPI();
   private currentMode: "none" | "full" | "partial" = "none";
 
   private sendCommand(cmd: number): void {
@@ -83,10 +83,10 @@ export class WaveshareEPaper154 {
       const chunkSize = 1024;
       for (let offset = 0; offset < data.length; offset += chunkSize) {
         const end = Math.min(offset + chunkSize, data.length);
-        this.spi.write(data.subarray(offset, end) as any);
+        this.spi.write(data.subarray(offset, end));
       }
     } else {
-      this.spi.write(data as any);
+      this.spi.write(data);
     }
     digitalWrite(this.csPin, 1); // CS = inactive
   }
