@@ -2,7 +2,26 @@
 
 interface Pin {}
 
-declare const global: any;
+interface EspruinoGlobalScope {
+  onInit?: () => void;
+  main?: () => void;
+  updatePRData?: (rawJson: unknown) => void;
+  [key: string]: unknown;
+}
+
+declare const global: EspruinoGlobalScope;
+declare var onInit: (() => void) | undefined;
+declare var main: (() => void) | undefined;
+declare var updatePRData: ((rawJson: unknown) => void) | undefined;
+
+interface SPI {
+  setup(options: { sck?: Pin; mosi?: Pin; miso?: Pin; baud?: number; mode?: number }): void;
+  write(data: number | number[] | Uint8Array | string): void;
+}
+
+declare const SPI: {
+  new (): SPI;
+};
 
 declare const D0: Pin;
 declare const D3: Pin;
@@ -28,7 +47,7 @@ interface WatchOptions {
   repeat?: boolean;
   edge?: "rising" | "falling" | "both";
   debounce?: number;
-  data?: any;
+  data?: unknown;
 }
 
 declare function setWatch(
@@ -78,6 +97,11 @@ interface WifiIPInfo {
   mac: string;
 }
 
+interface WifiStatus {
+  status: string;
+  reason?: number;
+}
+
 interface WifiModule {
   connect(
     ssid: string,
@@ -86,7 +110,7 @@ interface WifiModule {
   ): void;
   disconnect(callback?: () => void): void;
   getIP(): WifiIPInfo;
-  getStatus(callback: (status: any) => void): void;
+  getStatus(callback: (status: WifiStatus) => void): void;
 }
 
 interface HttpResponse {
@@ -118,8 +142,15 @@ interface HttpModule {
   ): ClientRequest;
 }
 
+interface StorageModule {
+  read(filename: string): string;
+  write(filename: string, data: string, offset?: number, size?: number): boolean;
+  erase(filename: string): void;
+  list(): string[];
+}
+
 declare function require(moduleName: "Wifi"): WifiModule;
 declare function require(moduleName: "http"): HttpModule;
-declare function require(moduleName: "Storage"): any;
-declare function require(moduleName: string): any;
+declare function require(moduleName: "Storage"): StorageModule;
+declare function require(moduleName: string): unknown;
 
